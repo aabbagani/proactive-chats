@@ -1,0 +1,969 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2064%2064%27%3E%3Cline%20x1%3D%2732%27%20y1%3D%2744%27%20x2%3D%2732%27%20y2%3D%2761%27%20stroke%3D%27%238a3b12%27%20stroke-width%3D%273%27%20stroke-linecap%3D%27round%27/%3E%3Cpath%20d%3D%27M32%204%20L36%2014%20L41%2011%20L39%2024%20L48%2017%20L50%2022%20L58%2020%20L54%2030%20L60%2033%20L46%2042%20L48%2048%20L34%2045%20L30%2045%20L16%2048%20L18%2042%20L4%2033%20L10%2030%20L6%2020%20L14%2022%20L16%2017%20L25%2024%20L23%2011%20L28%2014%20Z%27%20fill%3D%27%23e9772b%27%20stroke%3D%27%23d9531e%27%20stroke-width%3D%272.5%27%20stroke-linejoin%3D%27round%27/%3E%3C/svg%3E">
+<title>Maple Town: Proactive Chats</title>
+<meta name="description" content="Concept prototype: a government AI agent that suggests the next steps of a service and sends reminders only when a resident asks. Independent case study with made-up data.">
+<style>
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --surface-2: #eef0f2; --ink: #1d1b1a; --muted: #5d6166;
+  --line: #dcdfe3; --accent: #8c2f4a; --accent-ink: #ffffff; --accent-soft: #f6e9ed;
+  --pop: #b60a3c; --pop-soft: #f9e8eb;
+  --title: #8c2f4a; --title-2: #b60a3c; --title-3: #bf5c58;
+  --ok: #1e7550; --ok-soft: #e2f3ea; --warn: #8a5300; --warn-soft: #fbf0dc;
+  --leaf-bg: #fff1e3; --bot: #eef0f2; --user: #8c2f4a; --user-ink: #ffffff; --shadow: 0 10px 30px rgba(20, 35, 50, .12);
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121315; --surface: #1b1c1f; --surface-2: #26282c; --ink: #ececec; --muted: #a3a7ad;
+    --line: #34373c; --accent: #e7a3b6; --accent-ink: #1b1c1f; --accent-soft: #3a1f29;
+    --pop: #f2809b; --pop-soft: #3b1a22;
+    --title: #f0bccb; --title-2: #f2809b; --title-3: #e59a96;
+    --ok: #6cc79c; --ok-soft: #173327; --warn: #e2b061; --warn-soft: #3a2c14;
+    --leaf-bg: #3a2614; --bot: #26282c; --user: #6e2540; --user-ink: #ffffff; --shadow: 0 10px 30px rgba(0, 0, 0, .4);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+
+/* Header */
+.top { background: var(--surface); border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 12px; padding-bottom: 12px; }
+.brand { color: var(--title); font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.brand .tag { font-size: 12px; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 2px 8px; border-radius: 99px; }
+.tabs { display: flex; gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 10px; }
+.tabs button { border: 0; background: transparent; padding: 6px 12px; border-radius: 7px; font-weight: 600; color: var(--muted); }
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.disclaimer { font-size: 13px; color: var(--muted); padding: 10px 0 0; margin: 0; }
+.lede { margin: 6px 0 18px; font-size: 15px; max-width: 760px; }
+
+/* Resident view layout */
+.stage { display: grid; grid-template-columns: 390px 1fr; gap: 28px; align-items: start; padding-bottom: 40px; }
+@media (max-width: 860px) { .stage { grid-template-columns: 1fr; gap: 14px; } .stage > .side { display: contents; } .stage .try { order: -1; } }
+
+/* Phone */
+.phone { position: relative; width: 100%; max-width: 390px; height: 720px; margin: 0 auto; background: var(--surface); border: 10px solid #1d242c; border-radius: 40px; box-shadow: var(--shadow); overflow: hidden; border-color: #2a2226; display: flex; flex-direction: column; }
+@media (max-width: 420px) { .phone { height: 640px; border-width: 6px; border-radius: 28px; } }
+.phone-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 14px 10px; border-bottom: 1px solid var(--line); }
+.agent { display: flex; align-items: center; gap: 10px; }
+.leaf { width: 44px; height: 44px; flex: none; border-radius: 50%; background: var(--leaf-bg); display: grid; place-items: center; }
+.leaf svg { width: 38px; height: 38px; overflow: visible; transform-origin: 50% 92%; animation: sway 4s ease-in-out infinite; }
+.leaf .eyes { transform-origin: 32px 30px; animation: blink 5s infinite; }
+.leaf.wave svg { animation: wave 1.1s ease-in-out; }
+.leaf.think svg { animation: think .7s ease-in-out infinite; }
+.leaf.cheer svg { animation: cheer .9s cubic-bezier(.3,1.6,.5,1); }
+.falling { position: absolute; top: -30px; width: 22px; height: 22px; pointer-events: none; z-index: 4; animation: fall var(--dur, 2.6s) ease-in forwards; }
+@keyframes sway { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+@keyframes blink { 0%, 94%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+@keyframes wave { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-18deg); } 40% { transform: rotate(14deg); } 60% { transform: rotate(-10deg); } 80% { transform: rotate(6deg); } }
+@keyframes think { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-3px) rotate(3deg); } }
+@keyframes cheer { 0% { transform: translateY(0) scale(1); } 35% { transform: translateY(-9px) scale(1.12) rotate(-12deg); } 70% { transform: translateY(0) scale(.96) rotate(8deg); } 100% { transform: none; } }
+@keyframes fall { 0% { transform: translate(0, 0) rotate(0); opacity: 0; } 10% { opacity: 1; } 100% { transform: translate(var(--drift, 30px), 620px) rotate(var(--spin, 360deg)); opacity: .9; } }
+.agent b { display: block; font-size: 14px; line-height: 1.2; }
+.agent span { font-size: 12px; color: var(--muted); }
+.ghost { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 4px 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.chat { flex: 1; overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
+.msg { max-width: 86%; padding: 9px 12px; border-radius: 16px; font-size: 14px; animation: rise .25s ease-out; }
+.msg.bot { background: var(--bot); border-bottom-left-radius: 4px; align-self: flex-start; }
+.msg.user { background: var(--user); color: var(--user-ink); border-bottom-right-radius: 4px; align-self: flex-end; }
+.note { align-self: center; text-align: center; font-size: 12px; color: var(--muted); background: var(--surface-2); padding: 6px 10px; border-radius: 10px; max-width: 92%; animation: rise .25s ease-out; }
+.typing { display: inline-flex; gap: 4px; }
+.typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: blink 1s infinite; }
+.typing i:nth-child(2) { animation-delay: .15s; } .typing i:nth-child(3) { animation-delay: .3s; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; animation: rise .25s ease-out; }
+.chip { border: 1px solid var(--accent); color: var(--accent); background: var(--surface); border-radius: 99px; padding: 5px 11px; font-size: 13px; font-weight: 600; }
+.chip:hover { background: var(--accent-soft); }
+
+/* Next-step cards */
+.nextsteps { align-self: stretch; animation: rise .35s ease-out; }
+.nextsteps h4 { margin: 2px 2px 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--title-3); }
+.step-card { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); margin-bottom: 6px; overflow: hidden; animation: rise .35s ease-out both; }
+.step-card:nth-child(3) { animation-delay: .08s; } .step-card:nth-child(4) { animation-delay: .16s; }
+.step-open { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 8px; text-align: left; border: 0; background: transparent; padding: 10px 12px 4px; }
+.step-open b { font-size: 14px; }
+.why { border: 0; background: transparent; color: var(--pop); font-size: 12px; font-weight: 600; padding: 0 12px 9px; }
+.reason { display: none; margin: 0 12px 10px; padding: 8px 10px; border-radius: 8px; background: var(--accent-soft); font-size: 13px; }
+.reason.open { display: block; animation: rise .2s ease-out; }
+.reason small { display: block; color: var(--muted); margin-top: 4px; }
+.linkish { border: 0; background: transparent; color: var(--accent); text-decoration: underline; padding: 0; font-size: 12px; }
+.track-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 2px 2px 6px; }
+.track-head h4 { margin: 0; }
+.track-head span { font-size: 12px; font-weight: 700; color: var(--ok); white-space: nowrap; }
+.bar { height: 5px; border-radius: 99px; background: var(--surface-2); margin: 0 2px 8px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--ok); border-radius: 99px; transition: width .4s ease; }
+.step-open { justify-content: flex-start; }
+.step-open b { flex: 1; }
+.dot { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--surface-2); color: var(--muted); }
+.pill { flex: none; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.s-reminded .pill { background: var(--pop-soft); color: var(--pop); }
+.s-reminded .dot { background: var(--pop); color: #fff; }
+.s-done .pill { background: var(--ok-soft); color: var(--ok); }
+.s-done .dot { background: var(--ok); color: #fff; }
+.s-done b { color: var(--muted); text-decoration: line-through; }
+.s-done .step-open { cursor: default; }
+.s-skipped b, .s-skipped .pill { color: var(--muted); }
+
+/* Composer */
+.composer { display: flex; gap: 6px; padding: 10px; border-top: 1px solid var(--line); }
+.composer input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--surface-2); border-radius: 99px; padding: 8px 14px; font-size: 14px; }
+.send { border: 0; background: var(--accent); color: var(--accent-ink); border-radius: 99px; padding: 0 14px; font-weight: 700; }
+
+/* Bottom sheet inside phone */
+.backdrop { position: absolute; inset: 0; background: rgba(10, 18, 26, .35); opacity: 0; pointer-events: none; transition: opacity .2s; }
+.backdrop.show { opacity: 1; pointer-events: auto; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface); border-radius: 20px 20px 0 0; padding: 18px 16px 18px; transform: translateY(105%); transition: transform .28s cubic-bezier(.2,.8,.2,1); max-height: 88%; overflow-y: auto; }
+.sheet.show { transform: translateY(0); }
+.sheet h2 { font-size: 18px; margin: 0 0 6px; }
+.sheet p { margin: 0 0 10px; font-size: 14px; }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; margin: 0 0 14px; }
+.facts dt { color: var(--muted); } .facts dd { margin: 0; }
+.btn { display: block; width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px; font-weight: 700; margin-bottom: 8px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+fieldset { border: 0; padding: 0; margin: 0 0 10px; }
+legend { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.radio { display: flex; gap: 6px; }
+.radio label { flex: 1; text-align: center; border: 1px solid var(--line); border-radius: 10px; padding: 8px 4px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.radio input { position: absolute; opacity: 0; }
+.radio input:checked + span { color: var(--accent); }
+.radio label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.radio label:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+.field { display: block; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+.field textarea { display: block; width: 100%; margin-top: 4px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 8px 10px; font-size: 14px; color: var(--ink); min-height: 72px; resize: vertical; font-family: inherit; }
+.reports { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 12px; }
+.reports h3 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--title-3); }
+.reports li { margin-bottom: 6px; font-size: 14px; }
+.reports q { color: var(--muted); }
+.field input { display: block; width: 100%; margin-top: 4px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 8px 10px; font-size: 14px; color: var(--ink); }
+.preview { background: var(--surface-2); border-radius: 10px; padding: 8px 10px; }
+.consent { font-size: 12px !important; color: var(--muted); }
+.err { color: #b3261e; font-size: 12px; }
+
+/* Notification */
+.notif { position: absolute; top: 10px; left: 10px; right: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 10px 12px 12px; transform: translateY(-130%); transition: transform .35s cubic-bezier(.2,.8,.2,1); z-index: 5; }
+.notif.show { transform: translateY(0); }
+.notif .app { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; text-transform: uppercase; letter-spacing: .04em; }
+.notif p { margin: 4px 0 8px; font-size: 14px; }
+.notif .acts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.notif .acts button { border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 7px 4px; font-size: 13px; font-weight: 700; }
+.notif .acts button:first-child { background: var(--ok); border-color: var(--ok); color: #fff; }
+
+/* Side panel */
+.side { display: flex; flex-direction: column; gap: 14px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.panel h3 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--title-3); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.controls button { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 12px; font-weight: 700; }
+.controls .play { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.controls button:disabled { opacity: .45; cursor: default; }
+#narration { margin: 0; font-size: 15px; min-height: 48px; }
+#narration b { color: var(--pop); }
+.events { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow-y: auto; font-size: 13px; }
+.events li { padding: 6px 0; border-bottom: 1px dashed var(--line); animation: rise .25s ease-out; }
+.events .ev { font-weight: 700; margin-right: 6px; }
+.events .props { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+.events-empty { color: var(--muted); font-size: 13px; margin: 0; }
+.fine { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+
+/* Demo highlight */
+.pulse { animation: pulse .7s ease-in-out; position: relative; z-index: 2; }
+
+/* Agency tab */
+.agency { padding-bottom: 40px; }
+.pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.pills button { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 6px 14px; font-weight: 600; }
+.pills button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+.card h2 { margin: 0; font-size: 20px; color: var(--title); }
+.meta { color: var(--muted); font-size: 13px; margin: 2px 0 14px; }
+.switch { display: flex; align-items: center; gap: 10px; font-weight: 600; margin-bottom: 4px; }
+.switch input { width: 40px; height: 22px; accent-color: var(--accent); }
+.table-wrap { overflow-x: auto; margin-top: 16px; }
+table { width: 100%; border-collapse: collapse; min-width: 640px; }
+th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 6px 6px; border-bottom: 1px solid var(--line); }
+td { padding: 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td input { width: 100%; border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 7px 8px; font-size: 14px; }
+td input[type="number"] { width: 80px; }
+tr.warn td input.reason-in { border-color: var(--warn); }
+.rowwarn { color: var(--warn); font-size: 12px; margin-top: 3px; }
+.shown { font-size: 11px; font-weight: 700; color: var(--ok); }
+.hiddenlbl { font-size: 11px; font-weight: 700; color: var(--muted); }
+.icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 9px; font-size: 13px; }
+.agency-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
+.agency-foot .btn { width: auto; display: inline-block; margin: 0; padding: 8px 14px; }
+
+/* How it works */
+.how { padding-bottom: 40px; }
+.steps4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 10px 0 20px; }
+@media (max-width: 860px) { .steps4 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .steps4 { grid-template-columns: 1fr; } }
+.steps4 .card { padding: 14px; }
+.steps4 .n { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+.steps4 h3 { margin: 0 0 4px; font-size: 15px; color: var(--title-2); }
+.two h3 { color: var(--title-2); }
+.agent b { color: var(--title); }
+.steps4 p { margin: 0; font-size: 14px; color: var(--muted); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
+.two ul { margin: 6px 0 0; padding-left: 18px; }
+.two li { margin-bottom: 4px; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(182, 10, 60, .45); } 100% { box-shadow: 0 0 0 12px rgba(182, 10, 60, 0); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><linearGradient id="leafGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7a23b"/><stop offset="1" stop-color="#d9531e"/></linearGradient><symbol id="leafSym" viewBox="0 0 64 64"><line x1="32" y1="44" x2="32" y2="61" stroke="#8a3b12" stroke-width="3" stroke-linecap="round"/><path d="M32 4 L36 14 L41 11 L39 24 L48 17 L50 22 L58 20 L54 30 L60 33 L46 42 L48 48 L34 45 L30 45 L16 48 L18 42 L4 33 L10 30 L6 20 L14 22 L16 17 L25 24 L23 11 L28 14 Z" fill="url(#leafGrad)" stroke="#e0661f" stroke-width="2.5" stroke-linejoin="round"/><g stroke="#a8430f" stroke-width="1.2" stroke-linecap="round" opacity=".45" fill="none"><path d="M32 44 L32 12"/><path d="M32 36 L49 21"/><path d="M32 36 L15 21"/><path d="M32 41 L53 32"/><path d="M32 41 L11 32"/></g></symbol></defs></svg>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">Maple Town: Proactive Chats <span class="tag">Concept</span></div>
+    <div class="tabs" role="tablist" aria-label="Views">
+      <button role="tab" id="t-resident" aria-controls="p-resident" aria-selected="true">Resident view</button>
+      <button role="tab" id="t-agency" aria-controls="p-agency" aria-selected="false" tabindex="-1">Agency step lists</button>
+      <button role="tab" id="t-how" aria-controls="p-how" aria-selected="false" tabindex="-1">How it works</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <p class="disclaimer">Independent case study, not an official Granicus product. Maple Town is a made-up town, and every service, step, date and contact here is made up. Nothing is sent.</p>
+</div>
+
+<main class="wrap">
+  <!-- Resident view -->
+  <section id="p-resident" role="tabpanel" aria-labelledby="t-resident">
+    <p class="lede">A government AI agent answers a question, then shows the <b>next steps</b> people usually need, each with a reason. It tracks a deadline only if the resident taps <b>Remind me</b>.</p>
+    <div class="stage">
+      <div class="phone" id="phone">
+        <div class="notif" id="notif" role="alert" aria-hidden="true"></div>
+        <div class="phone-head">
+          <div class="agent">
+            <span class="leaf wave" id="mascot" aria-hidden="true"><svg viewBox="0 0 64 64"><use href="#leafSym"/><g class="eyes" fill="#4a1f05"><circle cx="27" cy="30" r="2.6"/><circle cx="37" cy="30" r="2.6"/></g><circle cx="23.5" cy="35" r="2.2" fill="#ff8a8a" opacity=".55"/><circle cx="40.5" cy="35" r="2.2" fill="#ff8a8a" opacity=".55"/><path d="M28.5 35.5 Q32 39 35.5 35.5" stroke="#4a1f05" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></span>
+            <div><b>Maple Town Help</b><span>AI agent · answers from town pages</span></div>
+          </div>
+          <button class="ghost" id="myReminders">My reminders</button>
+        </div>
+        <div class="chat" id="chat" aria-live="polite" aria-label="Conversation"></div>
+        <form class="composer" id="composer" autocomplete="off">
+          <label class="sr" for="q">Ask about a town service</label>
+          <input id="q" placeholder="Ask about a town service…">
+          <button class="send" type="submit">Send</button>
+        </form>
+        <div class="backdrop" id="backdrop"></div>
+        <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" aria-hidden="true"></div>
+      </div>
+
+      <aside class="side">
+        <div class="panel try">
+          <h3>Try it</h3>
+          <div class="controls">
+            <button class="play" id="play">▶ Play demo</button>
+            <button id="skip" disabled>Skip to reminder day</button>
+            <button id="restart">Restart</button>
+          </div>
+          <p class="fine">Pick a service in the chat, or type a question. The demo plays the demolition-permit story in about 30 seconds.</p>
+        </div>
+        <div class="panel">
+          <h3>What's happening</h3>
+          <p id="narration"></p>
+        </div>
+        <div class="panel">
+          <h3>Events tracked</h3>
+          <p class="events-empty" id="eventsEmpty">Nothing yet. Each tap logs the event that would feed a metric.</p>
+          <ol class="events" id="events"></ol>
+          <p class="fine">Repeat calls come from the agency's call logs, so they can't be shown here.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Agency view -->
+  <section id="p-agency" role="tabpanel" aria-labelledby="t-agency" class="agency" hidden>
+    <p class="lede">Next steps come only from lists the agency writes. Edit a list here, then ask about that service in the <b>Resident view</b>. Changes show right away.</p>
+    <div class="pills" id="svcPills" role="group" aria-label="Service"></div>
+    <div class="card" id="agencyCard"></div>
+  </section>
+
+  <!-- How it works -->
+  <section id="p-how" role="tabpanel" aria-labelledby="t-how" class="how" hidden>
+    <p class="lede">Proactive Chats adds one thing to a government AI agent: after an answer, offer the next step, and track it only if the resident agrees.</p>
+    <div class="steps4">
+      <div class="card"><div class="n">1</div><h3>Ask</h3><p>The resident asks a question. The agent answers as it does today.</p></div>
+      <div class="card"><div class="n">2</div><h3>See next steps</h3><p>Every next step from the agency's list, in order, each with a reason.</p></div>
+      <div class="card"><div class="n">3</div><h3>Opt in</h3><p>Remind me shows the channel and schedule before anything is tracked.</p></div>
+      <div class="card"><div class="n">4</div><h3>Remind and close</h3><p>One reminder before the deadline, with Done, Snooze and Stop. The list tracks what's left.</p></div>
+    </div>
+    <div class="two">
+      <div class="card">
+        <h3>Rules it follows</h3>
+        <ul>
+          <li>Steps come only from the agency's list. The agent never makes one up.</li>
+          <li>Every step shows why it's suggested, and the whole list stays visible.</li>
+          <li>No reminder without a tap. Stop ends all reminders.</li>
+          <li>One reminder per step. Same-day reminders arrive as one message.</li>
+          <li>Agencies can switch suggestions off for sensitive services.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Left out of this prototype</h3>
+        <ul>
+          <li>Real messages, logins and saved data. Everything resets on reload.</li>
+          <li>The agency's own systems confirming a step is done.</li>
+          <li>Other languages, and steps that belong to other agencies.</li>
+          <li>Phone and in-person service.</li>
+          <li>Time passing. "Skip to reminder day" stands in for it.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<noscript><p class="wrap">This prototype needs JavaScript.</p></noscript>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- Made-up data ---------- */
+const DEFAULT_SERVICES = {
+  demolition: {
+    id: 'demolition', name: 'Demolition permit', ask: 'How do I get a demolition permit?',
+    office: 'Permits Office', reviewed: 'Sep 2026', suggestions: true,
+    keywords: ['demolition', 'demolish', 'tear down', 'knock down', 'teardown'],
+    answer: 'To get a demolition permit in Maple Town, apply online with a site plan and proof of ownership. Most applications are reviewed within 10 business days.',
+    steps: [
+      { id: 'd1', title: 'Shut off utilities', days: 7, reason: 'Gas, water and power must be off before demolition starts. Most people with a demolition permit need this next.', detail: 'Ask each utility to disconnect service at the address. Keep the confirmation numbers for your inspection.' },
+      { id: 'd2', title: 'Get a dumpster permit', days: 10, reason: 'A dumpster on the street needs its own permit. Many demolition projects need one.', detail: 'Apply for a right-of-way permit if the dumpster will sit on the street or sidewalk.' },
+      { id: 'd3', title: 'Book the final inspection', days: 30, reason: 'The permit closes only after an inspector signs off.', detail: 'Book online once the site is cleared. An inspector checks the lot is level and safe.' }
+    ]
+  },
+  business: {
+    id: 'business', name: 'Home business license', ask: 'How do I start a home business?',
+    office: 'Business Licensing', reviewed: 'Aug 2026', suggestions: true,
+    keywords: ['business', 'license', 'licence', 'shop', 'side hustle', 'sell'],
+    answer: 'To run a business from home in Maple Town, apply for a home business license online. You will need your address and a short description of the business.',
+    steps: [
+      { id: 'b1', title: 'Check home business zoning', days: 14, reason: 'Some home businesses need a zoning check before the license is approved.', detail: 'Look up your address on the zoning map. Businesses with customer visits may need extra approval.' },
+      { id: 'b2', title: 'Register for town business tax', days: 30, reason: 'Every licensed business needs a town tax account within 30 days.', detail: 'Create a business tax account with your license number.' },
+      { id: 'b3', title: 'Post your license on site', days: 35, reason: 'Inspectors ask to see the license at the business address.', detail: 'Print the license and keep it where you work.' },
+      { id: 'b4', title: 'Renew your license', days: 365, reason: 'Licenses expire after one year.', detail: 'Renew online before the expiry date to avoid a late fee.' }
+    ]
+  },
+  event: {
+    id: 'event', name: 'Park event permit', ask: 'How do I hold an event in a park?',
+    office: 'Parks Department', reviewed: 'Sep 2026', suggestions: true,
+    keywords: ['park', 'event', 'festival', 'party', 'picnic', 'gathering'],
+    answer: 'To hold an event in a Maple Town park, reserve the site online at least 30 days ahead. Events with more than 100 people also need a park event permit.',
+    steps: [
+      { id: 'e1', title: 'Send proof of event insurance', days: 14, reason: 'Events with more than 100 people need insurance on file before the permit is final.', detail: 'Upload a certificate of insurance that names the Town of Maple Town.' },
+      { id: 'e2', title: 'Apply for a noise permit', days: 21, reason: 'Speakers or live music in a park need their own permit.', detail: 'Apply if you will use amplified sound after 6 p.m.' },
+      { id: 'e3', title: 'Order trash and recycling bins', days: 25, reason: 'Organizers of large events arrange their own bins.', detail: 'Order bins from Public Works at least 5 days before the event.' },
+      { id: 'e4', title: 'Book the post-event walkthrough', days: 31, reason: 'Your deposit is returned after staff check the site.', detail: 'A staff member walks the site with you the day after the event.' }
+    ]
+  }
+};
+const ORDER = ['demolition', 'business', 'event'];
+const CONTACT = { text: '(555) 010-0147', email: 'resident@example.com', chat: '' };
+const CHANNEL = {
+  text:  { label: 'Text',    noun: 'text',         app: 'Messages',         stop: 'Reply STOP anytime.' },
+  email: { label: 'Email',   noun: 'email',        app: 'Mail',             stop: 'Every email has a Stop link.' },
+  chat:  { label: 'In chat', noun: 'chat message', app: 'Maple Town Help', stop: 'Tap Stop anytime.' }
+};
+
+/* ---------- State ---------- */
+const clone = (o) => JSON.parse(JSON.stringify(o));
+let services = clone(DEFAULT_SERVICES);
+let reminders = [];
+let session = freshSession();
+let busy = false;
+let agencySel = 'demolition';
+const demo = { token: 0, running: false };
+
+function freshSession() { return { done: new Set(), declined: new Set(), notForMe: new Set() }; }
+const reports = [];
+
+/* ---------- Helpers ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sleep = (ms) => new Promise((r) => setTimeout(r, reduced ? Math.min(ms, 150) : ms));
+const today = new Date(); today.setHours(9, 0, 0, 0);
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const fmt = (d) => d.toLocaleDateString('en-US', d.getFullYear() === today.getFullYear()
+  ? { weekday: 'short', month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' });
+const key = (svc, step) => svc.id + ':' + step.id;
+const findStep = (svcId, stepId) => (services[svcId].steps.find((s) => s.id === stepId));
+
+const chat = $('#chat'), sheet = $('#sheet'), backdrop = $('#backdrop'), notif = $('#notif');
+const narration = $('#narration'), events = $('#events');
+
+function narrate(html) { narration.innerHTML = html; }
+function scrollChat() { chat.scrollTop = chat.scrollHeight; }
+
+/* ---------- Event log ---------- */
+function logEvent(name, props) {
+  $('#eventsEmpty').hidden = true;
+  const li = document.createElement('li');
+  const p = Object.entries(props || {}).map(([k, v]) => k + ': ' + esc(v)).join(' · ');
+  li.innerHTML = '<span class="ev">' + esc(name) + '</span><span class="props">' + p + '</span>';
+  events.prepend(li);
+}
+
+/* ---------- Chat ---------- */
+function bubble(role, text) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.textContent = text;
+  chat.append(div); scrollChat();
+  return div;
+}
+function note(text) {
+  const div = document.createElement('div');
+  div.className = 'note'; div.textContent = text;
+  chat.append(div); scrollChat();
+}
+const mascot = $('#mascot');
+function mood(name) {
+  mascot.classList.remove('wave', 'think', 'cheer');
+  if (!name) return;
+  void mascot.offsetWidth; // restart the animation
+  mascot.classList.add(name);
+  if (name !== 'think') setTimeout(() => mascot.classList.remove(name), 1200);
+}
+function leafShower() {
+  if (reduced) return;
+  const phone = $('#phone');
+  for (let i = 0; i < 12; i++) {
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    s.setAttribute('class', 'falling'); s.setAttribute('aria-hidden', 'true'); s.setAttribute('viewBox', '0 0 64 64');
+    s.innerHTML = '<use href="#leafSym"/>';
+    s.style.left = Math.round(Math.random() * 90) + '%';
+    s.style.setProperty('--drift', Math.round(Math.random() * 120 - 60) + 'px');
+    s.style.setProperty('--spin', Math.round(Math.random() * 540 - 270) + 'deg');
+    s.style.setProperty('--dur', (2 + Math.random() * 1.4).toFixed(2) + 's');
+    s.style.animationDelay = (Math.random() * .6).toFixed(2) + 's';
+    const size = 14 + Math.round(Math.random() * 14); s.style.width = s.style.height = size + 'px';
+    phone.append(s);
+    setTimeout(() => s.remove(), 4200);
+  }
+}
+
+async function botSay(text) {
+  mood('think');
+  const t = document.createElement('div');
+  t.className = 'msg bot';
+  t.innerHTML = '<span class="typing" aria-label="Typing"><i></i><i></i><i></i></span>';
+  chat.append(t); scrollChat();
+  await sleep(750);
+  t.remove();
+  if (mascot.classList.contains('think')) mood(null);
+  return bubble('bot', text);
+}
+function serviceChips() {
+  const wrap = document.createElement('div');
+  wrap.className = 'chips';
+  ORDER.forEach((id) => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.type = 'button'; b.textContent = services[id].name;
+    b.dataset.svc = id;
+    b.addEventListener('click', () => ask(services[id].ask));
+    wrap.append(b);
+  });
+  chat.append(wrap); scrollChat();
+}
+
+function matchService(text) {
+  const t = text.toLowerCase();
+  return ORDER.map((id) => services[id]).find((s) => s.keywords.some((k) => t.includes(k)));
+}
+
+async function ask(text) {
+  text = text.trim();
+  if (!text || busy) return;
+  busy = true;
+  closeSheet();
+  bubble('user', text);
+  const svc = matchService(text);
+  if (!svc) {
+    await botSay('This demo knows three made-up Maple Town services. Try one of these:');
+    serviceChips();
+    narrate('The prototype answers from a script. Real questions would go to the agent as they do today.');
+    busy = false; return;
+  }
+  await botSay(svc.answer);
+  if (!svc.suggestions || !validSteps(svc).length) {
+    note('No next steps shown. The ' + svc.office + ' has turned suggestions off for this service.');
+    narrate('The agency switched next steps off for <b>' + esc(svc.name) + '</b>, so the resident gets the answer only. Agencies can do this for sensitive services. Switch it back on in <b>Agency step lists</b>.');
+    busy = false; return;
+  }
+  renderTracker(svc);
+  logEvent('Next steps shown', { service: svc.name, steps: validSteps(svc).length });
+  narrate('The agent matched the question to the ' + esc(svc.office) + '\'s step list and shows <b>every next step, in order</b>, each with a reason. <b>Nothing is tracked yet.</b>');
+  busy = false;
+}
+
+/* ---------- Step tracker: one per service, always lists every step ---------- */
+const validSteps = (svc) => svc.steps.filter((s) => s.title.trim() && s.reason.trim());
+
+function stepStatus(svc, step) {
+  const k = key(svc, step);
+  if (session.done.has(k)) return { s: 'done', label: 'Done' };
+  const r = reminders.find((x) => x.key === k && x.status === 'scheduled');
+  if (r) return { s: 'reminded', label: 'Reminder ' + fmt(r.on) };
+  if (session.declined.has(k) || session.notForMe.has(k)) return { s: 'skipped', label: 'Skipped' };
+  return { s: 'todo', label: 'Due ' + fmt(addDays(today, step.days)) };
+}
+
+function renderTracker(svc) {
+  const old = $$('.nextsteps').find((w) => w.dataset.svc === svc.id);
+  if (old) old.remove();
+  const steps = validSteps(svc);
+  if (!svc.suggestions || !steps.length) return;
+  const doneN = steps.filter((s) => session.done.has(key(svc, s))).length;
+  const wrap = document.createElement('div');
+  wrap.className = 'nextsteps'; wrap.dataset.svc = svc.id;
+  wrap.innerHTML =
+    '<div class="track-head"><h4>Your next steps · ' + esc(svc.name) + '</h4><span>' + doneN + ' of ' + steps.length + ' done</span></div>' +
+    '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + steps.length + '" aria-valuenow="' + doneN + '" aria-label="Steps done"><i style="width:' + Math.round(100 * doneN / steps.length) + '%"></i></div>';
+  steps.forEach((step, i) => {
+    const st = stepStatus(svc, step);
+    const card = document.createElement('div');
+    card.className = 'step-card s-' + st.s; card.dataset.key = key(svc, step);
+    card.innerHTML =
+      '<button class="step-open" type="button"' + (st.s === 'done' ? ' disabled' : '') + '>' +
+      '<span class="dot" aria-hidden="true">' + (st.s === 'done' ? '✓' : i + 1) + '</span>' +
+      '<b>' + esc(step.title) + '</b><span class="pill">' + esc(st.label) + '</span></button>' +
+      '<button class="why" type="button" aria-expanded="false">Why am I seeing this?</button>' +
+      '<div class="reason">' + esc(step.reason) +
+      '<small>Written by the Maple Town ' + esc(svc.office) + ' · reviewed ' + esc(svc.reviewed) + ' · ' +
+      (reports.some((x) => x.key === key(svc, step)) ? 'Reported to the ' + esc(svc.office) + '. Thank you.'
+        : '<button class="linkish report" type="button">Report a wrong step</button>') + '</small></div>';
+    $('.step-open', card).addEventListener('click', () => openStep(svc.id, step.id));
+    $('.why', card).addEventListener('click', (e) => {
+      const r = $('.reason', card); const open = !r.classList.contains('open');
+      r.classList.toggle('open', open); e.currentTarget.setAttribute('aria-expanded', open);
+      if (open) {
+        logEvent('Reason viewed', { step: step.title });
+        narrate('The reason line says <b>why</b> the step is shown and <b>who wrote it</b>. Residents in the survey said not knowing why was a reason to distrust suggestions.');
+      }
+    });
+    const rb = $('.report', card);
+    if (rb) rb.addEventListener('click', () => openReport(svc.id, step.id));
+    wrap.append(card);
+  });
+  chat.append(wrap); scrollChat();
+}
+
+function refreshTrackers() {
+  $$('.nextsteps').forEach((w) => { if (services[w.dataset.svc]) renderTracker(services[w.dataset.svc]); });
+}
+
+/* ---------- Sheet ---------- */
+let lastFocus = null;
+function openSheet(html) {
+  lastFocus = document.activeElement;
+  sheet.innerHTML = html;
+  sheet.classList.add('show'); backdrop.classList.add('show');
+  sheet.setAttribute('aria-hidden', 'false');
+  const f = $('button, input', sheet); if (f) setTimeout(() => f.focus({ preventScroll: true }), 50);
+}
+function closeSheet() {
+  if (!sheet.classList.contains('show')) return;
+  sheet.classList.remove('show'); backdrop.classList.remove('show');
+  sheet.setAttribute('aria-hidden', 'true');
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus({ preventScroll: true });
+}
+backdrop.addEventListener('click', closeSheet);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+
+function remindDate(step) {
+  const deadline = addDays(today, step.days);
+  let on = addDays(deadline, -3);
+  if (on <= today) on = addDays(today, 1);
+  if (on > deadline) on = deadline;
+  return { deadline, on };
+}
+
+function openStep(svcId, stepId) {
+  const svc = services[svcId], step = findStep(svcId, stepId);
+  if (!step) return;
+  const k = key(svc, step);
+  const st = stepStatus(svc, step);
+  if (st.s === 'done') return;
+  const r = reminders.find((x) => x.key === k && x.status === 'scheduled');
+  const { deadline } = remindDate(step);
+  const actions = st.s === 'reminded'
+    ? '<p class="preview">Reminder set: 1 ' + CHANNEL[r.channel].noun + ' on <b>' + fmt(r.on) + '</b>.</p>' +
+      '<button class="btn primary" data-act="done">Mark as done</button>' +
+      '<button class="btn" data-act="stopone">Stop this reminder</button>'
+    : '<button class="btn primary" data-act="remind">Remind me</button>' +
+      '<div class="row"><button class="btn" data-act="done">Already done</button><button class="btn" data-act="no">' + (st.s === 'skipped' ? 'Keep skipped' : 'Skip for now') + '</button></div>' +
+      (st.s === 'skipped' ? '' : '<button class="linkish" data-act="notforme">This doesn\'t apply to me</button>');
+  openSheet(
+    '<h2 id="sheetTitle">' + esc(step.title) + '</h2>' +
+    '<p>' + esc(step.detail || 'See the agency page for details.') + '</p>' +
+    '<dl class="facts"><dt>Due</dt><dd>' + fmt(deadline) + ' (in ' + step.days + ' days)</dd>' +
+    '<dt>From</dt><dd>Maple Town ' + esc(svc.office) + '</dd>' +
+    '<dt>More</dt><dd>mapletown.example/' + esc(svc.id) + '</dd></dl>' + actions
+  );
+  narrate(st.s === 'reminded'
+    ? 'This step already has a reminder. The resident can finish it now or stop the reminder.'
+    : 'The step opens with its deadline and source. The resident chooses: <b>Remind me</b>, <b>Already done</b>, or <b>Skip for now</b>.');
+  const on = (act, fn) => { const b = $('[data-act=' + act + ']', sheet); if (b) b.addEventListener('click', fn); };
+  on('remind', () => openConsent(svcId, stepId));
+  on('done', async () => {
+    closeSheet();
+    reminders.forEach((x) => { if (x.key === k && x.status === 'scheduled') x.status = 'done'; });
+    completeStep(svc, step, 'resident'); updateSkip();
+    await botSay('Marked as done: "' + step.title + '."');
+    await afterProgress(svc);
+  });
+  on('stopone', async () => {
+    closeSheet(); r.status = 'stopped'; updateSkip();
+    logEvent('Reminder action', { action: 'stop', steps: 1 });
+    await botSay('Reminder stopped for "' + step.title + '." It stays on your list.');
+    renderTracker(svc);
+  });
+  on('no', async () => {
+    closeSheet();
+    if (st.s === 'skipped') return;
+    session.declined.add(k);
+    logEvent('Step declined', { step: step.title, type: 'skip for now' });
+    await botSay('No problem. I won\'t remind you about that one. It stays on your list if you change your mind.');
+    renderTracker(svc);
+    narrate('Skipping is one tap, and the step is never pushed again. It still shows on the list, so the resident sees the whole path.');
+  });
+  on('notforme', async () => {
+    closeSheet(); session.notForMe.add(k);
+    logEvent('Step declined', { step: step.title, type: 'not for me' });
+    await botSay('Thanks. I\'ve let the ' + svc.office + ' know this step didn\'t fit.');
+    renderTracker(svc);
+    narrate('"Not for me" feeds a guardrail metric. If many residents say it, the agency\'s list needs fixing.');
+  });
+}
+
+function openReport(svcId, stepId) {
+  const svc = services[svcId], step = findStep(svcId, stepId);
+  if (!step) return;
+  openSheet(
+    '<h2 id="sheetTitle">Report a wrong step</h2>' +
+    '<p>"' + esc(step.title) + '" goes to the Maple Town ' + esc(svc.office) + ', which wrote it.</p>' +
+    '<label class="field">What\'s wrong? (optional)<textarea id="reportText" maxlength="300" placeholder="The deadline is 14 days, not 7."></textarea></label>' +
+    '<button class="btn primary" data-act="send">Send report</button>' +
+    '<button class="btn" data-act="cancel">Cancel</button>'
+  );
+  setTimeout(() => { const t = $('#reportText', sheet); if (t) t.focus({ preventScroll: true }); }, 60);
+  narrate('A wrong step does more harm than no step, so residents can report one, with an optional comment, straight to the office that wrote it.');
+  $('[data-act=cancel]', sheet).addEventListener('click', closeSheet);
+  $('[data-act=send]', sheet).addEventListener('click', async () => {
+    const comment = $('#reportText', sheet).value.trim();
+    reports.push({ key: key(svc, step), svcId, title: step.title, comment });
+    logEvent('Wrong step reported', { step: step.title, by: 'resident', comment: comment ? 'yes' : 'no' });
+    closeSheet();
+    await botSay('Thanks. I\'ve sent your report to the ' + svc.office + '.');
+    renderTracker(svc);
+    narrate('The report lands with the agency, comment included. Open <b>Agency step lists</b> to see it. Wrong-Step Reports is a guardrail metric.');
+  });
+}
+
+function openConsent(svcId, stepId, channel) {
+  const svc = services[svcId], step = findStep(svcId, stepId);
+  channel = channel || 'text';
+  const { deadline, on } = remindDate(step);
+  const ch = CHANNEL[channel];
+  const contactField = channel === 'chat' ? '' :
+    '<label class="field">' + (channel === 'text' ? 'Mobile number' : 'Email address') +
+    '<input id="contact" value="' + esc(CONTACT[channel]) + '" inputmode="' + (channel === 'text' ? 'tel' : 'email') + '"></label>';
+  openSheet(
+    '<h2 id="sheetTitle">Remind me: ' + esc(step.title) + '</h2>' +
+    '<fieldset><legend>How should we remind you?</legend><div class="radio">' +
+    Object.keys(CHANNEL).map((c) => '<label><input type="radio" name="ch" value="' + c + '"' + (c === channel ? ' checked' : '') + '><span>' + CHANNEL[c].label + '</span></label>').join('') +
+    '</div></fieldset>' + contactField +
+    '<p class="preview">1 reminder on <b>' + fmt(on) + '</b>, before the deadline (<b>' + fmt(deadline) + '</b>).</p>' +
+    '<p class="consent">Maple Town will send you one ' + ch.noun + ' about this step only. ' + ch.stop + ' Nothing else about you is tracked.</p>' +
+    '<p class="err" id="err" hidden>Enter a contact so we can reach you.</p>' +
+    '<button class="btn primary" data-act="confirm">Confirm reminder</button>' +
+    '<button class="btn" data-act="back">Back</button>'
+  );
+  narrate('Nothing is tracked until the resident sees the <b>channel</b>, the <b>schedule</b> and the <b>consent line</b>, then confirms. 16 of 29 survey respondents wanted to approve first.');
+  $$('input[name=ch]', sheet).forEach((r) => r.addEventListener('change', () => {
+    openConsent(svcId, stepId, r.value);
+    const sel = $('input[name=ch]:checked', sheet); if (sel) sel.focus();
+  }));
+  $('[data-act=back]', sheet).addEventListener('click', () => openStep(svcId, stepId));
+  $('[data-act=confirm]', sheet).addEventListener('click', async () => {
+    const c = $('#contact', sheet);
+    if (c && !c.value.trim()) { $('#err', sheet).hidden = false; c.focus(); return; }
+    const k = key(svc, step);
+    session.declined.delete(k); session.notForMe.delete(k);
+    reminders.push({ key: k, svcId, stepId, channel, deadline, on, status: 'scheduled', titleAtOptIn: step.title });
+    logEvent('Reminder opted in', { step: step.title, channel: ch.label.toLowerCase() });
+    closeSheet();
+    $('#skip').disabled = false;
+    await botSay('Done. You\'ll get 1 ' + ch.noun + ' on ' + fmt(on) + ' about "' + step.title + '." ' + ch.stop);
+    renderTracker(svc);
+    narrate('The reminder is set, and it is the <b>only</b> thing being tracked. The list still shows every step. Press <b>Skip to reminder day</b> to see it arrive.');
+  });
+}
+
+/* ---------- Reminders ---------- */
+const reminderTitle = (r) => { const s = findStep(r.svcId, r.stepId); return s ? s.title : r.titleAtOptIn; };
+
+function skipToReminder() {
+  const due = reminders.filter((r) => r.status === 'scheduled');
+  if (!due.length) { narrate('No reminders are scheduled. Tap a next step, then <b>Remind me</b>.'); return; }
+  closeSheet();
+  const first = due.reduce((a, b) => (b.on < a.on ? b : a));
+  const group = due.filter((r) => r.on.getTime() === first.on.getTime() && r.channel === first.channel);
+  const ch = CHANNEL[first.channel];
+  const body = group.length === 1
+    ? 'Reminder: "' + reminderTitle(first) + '" is due ' + fmt(first.deadline) + '. Reply DONE, SNOOZE or STOP.'
+    : 'Reminder: ' + group.length + ' steps are due soon: ' + group.map((r) => '"' + reminderTitle(r) + '" (' + fmt(r.deadline) + ')').join(', ') + '.';
+  notif.innerHTML =
+    '<div class="app"><span>' + esc(ch.app) + '</span><span>' + fmt(first.on) + ' · 9:00 AM</span></div>' +
+    '<p><b>Maple Town</b><br>' + esc(body) + '</p>' +
+    '<div class="acts"><button data-act="done">Done</button><button data-act="snooze">Snooze</button><button data-act="stop">Stop</button></div>';
+  notif.classList.add('show'); notif.setAttribute('aria-hidden', 'false');
+  logEvent('Reminder sent', { channel: ch.label.toLowerCase(), steps: group.length });
+  narrate('<b>Reminder day (simulated).</b> One message, with Done, Snooze and Stop. Reminders due the same day arrive together.');
+  $('[data-act=done]', notif).addEventListener('click', () => reminderAction(group, 'done'));
+  $('[data-act=snooze]', notif).addEventListener('click', () => reminderAction(group, 'snooze'));
+  $('[data-act=stop]', notif).addEventListener('click', () => reminderAction(group, 'stop'));
+  $('[data-act=done]', notif).focus({ preventScroll: true });
+}
+
+function hideNotif() { notif.classList.remove('show'); notif.setAttribute('aria-hidden', 'true'); }
+
+async function reminderAction(group, action) {
+  hideNotif();
+  logEvent('Reminder action', { action, steps: group.length });
+  if (action === 'stop') {
+    reminders.forEach((r) => { if (r.status === 'scheduled') r.status = 'stopped'; });
+    updateSkip();
+    await botSay('All reminders stopped. You\'ll only hear from Maple Town again if you ask.');
+    refreshTrackers();
+    narrate('<b>Stop</b> ends every reminder at once, as a STOP reply to a text would. The steps stay on the list. Opt-Out Rate is a guardrail metric.');
+    return;
+  }
+  if (action === 'snooze') {
+    group.forEach((r) => { const n = addDays(r.on, 1); r.on = n > r.deadline ? r.deadline : n; });
+    await botSay('Snoozed. I\'ll remind you again on ' + fmt(group[0].on) + '.');
+    refreshTrackers();
+    narrate('Snooze moves the reminder one day, never past the deadline.');
+    return;
+  }
+  const svcs = new Set();
+  group.forEach((r) => {
+    r.status = 'done';
+    const svc = services[r.svcId], step = findStep(r.svcId, r.stepId);
+    if (step) completeStep(svc, step, 'resident'); svcs.add(r.svcId);
+  });
+  updateSkip();
+  await botSay('Nice work. Marked as done: ' + group.map((r) => '"' + reminderTitle(r) + '"').join(', ') + '.');
+  for (const id of svcs) await afterProgress(services[id]);
+}
+
+function completeStep(svc, step, source) {
+  session.done.add(key(svc, step));
+  logEvent('Step completed', { step: step.title, source });
+  setTimeout(() => mood('cheer'), 900);
+}
+
+async function afterProgress(svc) {
+  const steps = validSteps(svc);
+  if (steps.length && steps.every((s) => session.done.has(key(svc, s)))) {
+    logEvent('Chain completed', { service: svc.name, steps: steps.length });
+    leafShower();
+    await botSay('That\'s every step for your ' + svc.name.toLowerCase() + ', done on time.');
+    renderTracker(svc);
+    narrate('<b>Chain complete.</b> This is the key metric: residents who finish every step by the deadline. In the real product, the agency\'s system could confirm each step instead of the resident.');
+    return;
+  }
+  const next = steps.find((s) => stepStatus(svc, s).s === 'todo');
+  if (next) await botSay('Next up: "' + next.title + '," due ' + fmt(addDays(today, next.days)) + '.');
+  renderTracker(svc);
+  narrate('The list updates in place. Every step stays visible with its status, so the resident always sees what\'s done, what has a reminder, and what\'s left.');
+}
+
+function updateSkip() { $('#skip').disabled = !reminders.some((r) => r.status === 'scheduled'); }
+
+$('#myReminders').addEventListener('click', openMyReminders);
+function openMyReminders() {
+  const list = reminders.length
+    ? '<ul style="list-style:none;padding:0;margin:0 0 12px">' + reminders.map((r, i) =>
+        '<li style="display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">' +
+        '<span><b>' + esc(reminderTitle(r)) + '</b><br><small style="color:var(--muted)">' +
+        (r.status === 'scheduled' ? CHANNEL[r.channel].label + ' on ' + fmt(r.on) : r.status === 'done' ? 'Done' : 'Stopped') +
+        '</small></span>' + (r.status === 'scheduled' ? '<button class="ghost" data-stop="' + i + '">Stop</button>' : '') + '</li>').join('') + '</ul>'
+    : '<p>No reminders yet. You only get one if you tap <b>Remind me</b> on a step.</p>';
+  openSheet('<h2 id="sheetTitle">My reminders</h2>' + list +
+    (reminders.some((r) => r.status === 'scheduled') ? '<button class="btn" data-act="stopall">Stop all reminders</button>' : '') +
+    '<button class="btn" data-act="close">Close</button>');
+  narrate('Everything the resident opted into, in one place, each with Stop.');
+  $$('[data-stop]', sheet).forEach((b) => b.addEventListener('click', () => {
+    const r = reminders[+b.dataset.stop]; r.status = 'stopped';
+    logEvent('Reminder action', { action: 'stop', steps: 1 });
+    updateSkip(); refreshTrackers(); openMyReminders();
+  }));
+  const sa = $('[data-act=stopall]', sheet);
+  if (sa) sa.addEventListener('click', () => {
+    reminders.forEach((r) => { if (r.status === 'scheduled') r.status = 'stopped'; });
+    logEvent('Reminder action', { action: 'stop', steps: 'all' });
+    updateSkip(); refreshTrackers(); openMyReminders();
+  });
+  $('[data-act=close]', sheet).addEventListener('click', closeSheet);
+}
+
+/* ---------- Restart ---------- */
+function restart() {
+  reminders = []; session = freshSession(); busy = false;
+  closeSheet(); hideNotif();
+  chat.innerHTML = ''; events.innerHTML = ''; $('#eventsEmpty').hidden = false;
+  $('#skip').disabled = true;
+  $$('.falling').forEach((l) => l.remove());
+  mood('wave');
+  bubble('bot', 'Hi, I\'m the Maple Town help agent. Ask me about a town service, or pick one:');
+  serviceChips();
+  narrate('A resident opens the town\'s AI agent. Pick a service, or press <b>Play demo</b>.');
+}
+
+/* ---------- Demo autoplay ---------- */
+async function demoWait(ms, my) { await sleep(ms); if (demo.token !== my) throw new Error('stopped'); }
+async function demoTap(el, my) {
+  if (!el) throw new Error('missing');
+  el.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
+  el.classList.add('pulse'); await demoWait(750, my); el.classList.remove('pulse');
+  el.click();
+}
+async function waitFor(fn, my, limit = 6000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < limit) { const v = fn(); if (v) return v; await demoWait(120, my); }
+  throw new Error('timeout');
+}
+async function playDemo() {
+  const my = ++demo.token; demo.running = true; setPlay();
+  showTab('resident');
+  try {
+    restart(); await demoWait(700, my);
+    const input = $('#q'); const q = services.demolition.ask;
+    for (const ch of q) { input.value += ch; await demoWait(35, my); }
+    await demoWait(300, my); input.value = '';
+    await ask(q); if (demo.token !== my) return;
+    const card = await waitFor(() => $('.nextsteps .step-card'), my);
+    await demoWait(800, my);
+    await demoTap($('.why', card), my); await demoWait(2000, my);
+    await demoTap($('.step-open', card), my); await demoWait(1700, my);
+    await demoTap($('[data-act=remind]', sheet), my); await demoWait(2200, my);
+    await demoTap($('[data-act=confirm]', sheet), my);
+    await waitFor(() => !$('#skip').disabled && !busy, my); await demoWait(2200, my);
+    await demoTap($('#skip'), my); await demoWait(2200, my);
+    await demoTap($('[data-act=done]', notif), my); await demoWait(2600, my);
+    narrate('That\'s the loop: <b>ask → see next steps → opt in → one reminder → done → next step.</b> Now try it yourself, or open <b>Agency step lists</b> to change what residents see.');
+  } catch (e) { /* stopped or interrupted */ }
+  if (demo.token === my) { demo.running = false; setPlay(); }
+}
+function stopDemo() { demo.token++; demo.running = false; setPlay(); }
+function setPlay() { $('#play').textContent = demo.running ? '■ Stop demo' : '▶ Play demo'; }
+$('#play').addEventListener('click', () => (demo.running ? stopDemo() : playDemo()));
+$('#restart').addEventListener('click', () => { stopDemo(); restart(); });
+$('#skip').addEventListener('click', skipToReminder);
+$('#composer').addEventListener('submit', (e) => {
+  e.preventDefault(); if (demo.running) stopDemo();
+  const q = $('#q'); const v = q.value; q.value = ''; ask(v);
+});
+
+/* ---------- Tabs ---------- */
+const TABS = ['resident', 'agency', 'how'];
+function showTab(name) {
+  TABS.forEach((t) => {
+    const on = t === name;
+    $('#t-' + t).setAttribute('aria-selected', on); $('#t-' + t).tabIndex = on ? 0 : -1;
+    $('#p-' + t).hidden = !on;
+  });
+  if (name === 'agency') renderAgency();
+}
+TABS.forEach((t, i) => {
+  const b = $('#t-' + t);
+  b.addEventListener('click', () => { if (t !== 'resident' && demo.running) stopDemo(); showTab(t); });
+  b.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const n = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length];
+    showTab(n); $('#t-' + n).focus();
+  });
+});
+
+/* ---------- Agency editor ---------- */
+function renderAgency() {
+  $('#svcPills').innerHTML = ORDER.map((id) =>
+    '<button type="button" data-svc="' + id + '" aria-pressed="' + (id === agencySel) + '">' + esc(services[id].name) + '</button>').join('');
+  $$('#svcPills button').forEach((b) => b.addEventListener('click', () => { agencySel = b.dataset.svc; renderAgency(); }));
+  const svc = services[agencySel];
+  const rows = svc.steps.map((s, i) => {
+    const valid = s.title.trim() && s.reason.trim();
+    const shown = valid;
+    return '<tr class="' + (s.reason.trim() ? '' : 'warn') + '">' +
+      '<td>' + (i + 1) + '<br>' + (svc.suggestions && shown ? '<span class="shown">SHOWN</span>' : '<span class="hiddenlbl">HIDDEN</span>') + '</td>' +
+      '<td><input aria-label="Step ' + (i + 1) + ' name" data-i="' + i + '" data-f="title" value="' + esc(s.title) + '"></td>' +
+      '<td><input class="reason-in" aria-label="Step ' + (i + 1) + ' reason" data-i="' + i + '" data-f="reason" value="' + esc(s.reason) + '">' +
+      (s.reason.trim() ? '' : '<div class="rowwarn">Needs a reason. Steps without one are never shown.</div>') + '</td>' +
+      '<td><input type="number" min="1" max="365" aria-label="Step ' + (i + 1) + ' due in days" data-i="' + i + '" data-f="days" value="' + s.days + '"></td>' +
+      '<td style="white-space:nowrap"><button class="icon-btn" type="button" data-up="' + i + '" aria-label="Move step ' + (i + 1) + ' up"' + (i === 0 ? ' disabled' : '') + '>↑</button> ' +
+      '<button class="icon-btn" type="button" data-del="' + i + '" aria-label="Delete step ' + (i + 1) + '">✕</button></td></tr>';
+  }).join('');
+  $('#agencyCard').innerHTML =
+    '<h2>' + esc(svc.name) + '</h2>' +
+    '<p class="meta">Maple Town ' + esc(svc.office) + ' · list reviewed ' + esc(svc.reviewed) + '</p>' +
+    '<label class="switch"><input type="checkbox" id="suggToggle"' + (svc.suggestions ? ' checked' : '') + '> Show next steps for this service</label>' +
+    '<p class="fine" style="margin:0 0 4px 50px">Switch this off for sensitive services, such as benefits. Residents then get the answer only.</p>' +
+    '<div class="table-wrap"><table><thead><tr><th>#</th><th>Step</th><th>Reason residents see</th><th>Due (days)</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    '<div class="agency-foot"><button class="btn" type="button" id="addStep"' + (svc.steps.length >= 5 ? ' disabled' : '') + '>+ Add step</button>' +
+    '<button class="btn" type="button" id="resetSvc">Reset this list</button>' +
+    '<span class="fine" style="margin:0">Residents see every step, in this order. A list holds up to 5. "Due" counts days from when the resident asks.</span></div>' +
+    (() => {
+      const mine = reports.filter((r) => r.svcId === svc.id);
+      return '<div class="reports"><h3>Wrong-step reports from residents (' + mine.length + ')</h3>' +
+        (mine.length ? '<ul>' + mine.map((r) => '<li><b>' + esc(r.title) + '</b>' + (r.comment ? ': <q>' + esc(r.comment) + '</q>' : ' (no comment)') + '</li>').join('') + '</ul>'
+          : '<p class="fine" style="margin:0">None yet. Residents can report a step from its "Why am I seeing this?" line.</p>') + '</div>';
+    })();
+
+  $('#suggToggle').addEventListener('change', (e) => { svc.suggestions = e.target.checked; renderAgency(); });
+  $$('#agencyCard input[data-f]').forEach((inp) => {
+    inp.addEventListener('input', () => {
+      const s = svc.steps[+inp.dataset.i];
+      if (inp.dataset.f === 'days') { const n = parseInt(inp.value, 10); s.days = Math.min(365, Math.max(1, isNaN(n) ? 1 : n)); }
+      else s[inp.dataset.f] = inp.value;
+    });
+    inp.addEventListener('change', () => renderAgency());
+  });
+  $$('#agencyCard [data-del]').forEach((b) => b.addEventListener('click', () => { svc.steps.splice(+b.dataset.del, 1); renderAgency(); }));
+  $$('#agencyCard [data-up]').forEach((b) => b.addEventListener('click', () => {
+    const i = +b.dataset.up; const [s] = svc.steps.splice(i, 1); svc.steps.splice(i - 1, 0, s); renderAgency();
+  }));
+  $('#addStep').addEventListener('click', () => {
+    svc.steps.push({ id: 'n' + Date.now(), title: 'New step', days: 14, reason: '', detail: '' });
+    renderAgency();
+    const ins = $$('#agencyCard input[data-f=reason]'); ins[ins.length - 1].focus();
+  });
+  $('#resetSvc').addEventListener('click', () => { services[agencySel] = clone(DEFAULT_SERVICES[agencySel]); renderAgency(); });
+}
+
+restart();
+})();
+</script>
+</body>
+</html>
