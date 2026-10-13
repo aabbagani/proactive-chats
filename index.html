@@ -347,7 +347,7 @@ tr.warn td input.reason-in { border-color: var(--warn); }
 const NYE = (() => { const t = new Date(); t.setHours(0, 0, 0, 0); const d = new Date(t.getFullYear(), 11, 31); if (d < t) d.setFullYear(d.getFullYear() + 1); return Math.max(6, Math.round((d - t) / 86400000)); })();
 const DEFAULT_SERVICES = {
   gym: {
-    id: 'gym', name: 'Turn a playground into an outdoor gym', ask: 'How does our neighborhood turn the playground into an outdoor gym?',
+    id: 'gym', name: 'Turn a playground into an outdoor gym', ask: 'How do we turn our playground into an outdoor gym?',
     office: 'Parks Department', reviewed: 'Sep 2026', suggestions: true,
     keywords: ['playground', 'outdoor gym', 'gym', 'fitness', 'workout', 'exercise'],
     answer: 'Neighborhood groups can propose changes to a Maple Town playground through the Parks Department\'s community project program. Projects are reviewed within 15 business days.',
@@ -886,7 +886,8 @@ async function playDemo() {
   try {
     restart(); await demoWait(700, my);
     const input = $('#q'); const q = services.gym.ask;
-    for (const ch of q) { input.value += ch; await demoWait(35, my); }
+    // Setting .value doesn't scroll the box the way real typing does, so follow the cursor by hand.
+    for (const ch of q) { input.value += ch; input.scrollLeft = input.scrollWidth; await demoWait(35, my); }
     await demoWait(300, my); input.value = '';
     await ask(q); if (demo.token !== my) return;
     const card = await waitFor(() => $('.nextsteps .step-card'), my);
