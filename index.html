@@ -363,12 +363,12 @@ const DEFAULT_SERVICES = {
     id: 'worship', name: 'Build a place of worship', ask: 'How do I build a place of worship?',
     office: 'Planning and Zoning Office', reviewed: 'Aug 2026', suggestions: true,
     keywords: ['worship', 'church', 'temple', 'mosque', 'synagogue', 'gurdwara', 'religious', 'chapel'],
-    answer: 'To build a place of worship in Maple Town, start with the Planning and Zoning Office. Places of worship are allowed in most zones after a site plan review.',
+    answer: 'To build a place of worship in Maple Town, start with the Planning and Zoning Office. Places of worship are allowed in most zones with a special use permit and a site plan review.',
     steps: [
       { id: 'w1', title: 'Check zoning for the site', days: 14, reason: 'Zoning sets what can be built on the site and how large it can be.', detail: 'Look up the site on the zoning map, or ask the Planning and Zoning Office for a zoning letter.' },
-      { id: 'w2', title: 'Submit the site plan', days: 30, reason: 'New buildings for public gatherings need a site plan review.', detail: 'Show the building, entrances, landscaping and drainage on one plan.' },
-      { id: 'w3', title: 'Get the building permit', days: 60, reason: 'Construction can start only after the building permit is issued.', detail: 'Apply with construction drawings stamped by a licensed architect or engineer.' },
-      { id: 'w4', title: 'Get the parking plan approved', days: 75, reason: 'Gathering places need enough parking for their largest services.', detail: 'Show the number of spaces, accessible spaces and how cars enter and leave.' },
+      { id: 'w2', title: 'Get a special use permit for a place of worship', days: 45, reason: 'Most zones allow places of worship with a special use permit. It reviews traffic, parking and neighbors\' input, not beliefs.', detail: 'Apply to the Planning and Zoning Office. A public hearing is scheduled, and neighbors can comment.' },
+      { id: 'w3', title: 'Submit the site plan', days: 60, reason: 'New buildings for public gatherings need a site plan review.', detail: 'Show the building, entrances, parking, landscaping and drainage on one plan.' },
+      { id: 'w4', title: 'Get the building permit', days: 90, reason: 'Construction can start only after the building permit is issued.', detail: 'Apply with construction drawings stamped by a licensed architect or engineer.' },
       { id: 'w5', title: 'Get the certificate of occupancy', days: 180, reason: 'The building can open to the public only after a final certificate.', detail: 'Book final inspections for building, fire and accessibility.' }
     ]
   },
@@ -432,6 +432,17 @@ const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); r
 const fmt = (d) => d.toLocaleDateString('en-US', d.getFullYear() === today.getFullYear()
   ? { weekday: 'short', month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' });
 const key = (svc, step) => svc.id + ':' + step.id;
+// Town offices are closed on weekends and on Dec 25 and Jan 1, so a deadline on a closed day moves
+// back to the last open day before it (or forward to the next one, if that would be today or earlier).
+const isClosed = (d) => d.getDay() === 0 || d.getDay() === 6 || (d.getMonth() === 11 && d.getDate() === 25) || (d.getMonth() === 0 && d.getDate() === 1);
+const dueDate = (step) => {
+  const d = addDays(today, step.days);
+  let back = d; while (isClosed(back)) back = addDays(back, -1);
+  if (back > today) return back;
+  let fwd = d; while (isClosed(fwd)) fwd = addDays(fwd, 1);
+  return fwd;
+};
+const daysUntil = (d) => Math.round((d - today) / 86400000);
 const findStep = (svcId, stepId) => (services[svcId].steps.find((s) => s.id === stepId));
 
 const chat = $('#chat'), sheet = $('#sheet'), backdrop = $('#backdrop'), notif = $('#notif');
@@ -551,7 +562,7 @@ function stepStatus(svc, step) {
   const r = reminders.find((x) => x.key === k && x.status === 'scheduled');
   if (r) return { s: 'reminded', label: 'Reminder ' + fmt(r.on) };
   if (session.declined.has(k) || session.notForMe.has(k)) return { s: 'skipped', label: 'Skipped' };
-  return { s: 'todo', label: 'Due ' + fmt(addDays(today, step.days)) };
+  return { s: 'todo', label: 'Due ' + fmt(dueDate(step)) };
 }
 
 function renderTracker(svc) {
@@ -617,7 +628,7 @@ backdrop.addEventListener('click', closeSheet);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
 
 function remindDate(step) {
-  const deadline = addDays(today, step.days);
+  const deadline = dueDate(step);
   let on = addDays(deadline, -3);
   if (on <= today) on = addDays(today, 1);
   if (on > deadline) on = deadline;
@@ -642,7 +653,7 @@ function openStep(svcId, stepId) {
   openSheet(
     '<h2 id="sheetTitle">' + esc(step.title) + '</h2>' +
     '<p>' + esc(step.detail || 'See the agency page for details.') + '</p>' +
-    '<dl class="facts"><dt>Due</dt><dd>' + fmt(deadline) + ' (in ' + step.days + ' days)</dd>' +
+    '<dl class="facts"><dt>Due</dt><dd>' + fmt(deadline) + ' (in ' + daysUntil(deadline) + ' days)</dd>' +
     '<dt>From</dt><dd>Maple Town ' + esc(svc.office) + '</dd>' +
     '<dt>More</dt><dd>mapletown.example/' + esc(svc.id) + '</dd></dl>' + actions
   );
@@ -820,7 +831,7 @@ async function afterProgress(svc) {
     return;
   }
   const next = steps.find((s) => stepStatus(svc, s).s === 'todo');
-  if (next) await botSay('Next up: "' + next.title + '," due ' + fmt(addDays(today, next.days)) + '.');
+  if (next) await botSay('Next up: "' + next.title + '," due ' + fmt(dueDate(next)) + '.');
   renderTracker(svc);
   narrate('The list updates in place. Every step stays visible with its status, so the resident always sees what\'s done, what has a reminder, and what\'s left.');
 }
