@@ -279,7 +279,7 @@ tr.warn td input.reason-in { border-color: var(--warn); }
             <button id="skip" disabled>Skip to reminder day</button>
             <button id="restart">Restart</button>
           </div>
-          <p class="fine">Pick a service in the chat, or type a question. The demo plays the demolition-permit story in about 30 seconds.</p>
+          <p class="fine">Pick a service in the chat, or type a question. The demo plays the playground-to-outdoor-gym story in about 30 seconds.</p>
         </div>
         <div class="panel">
           <h3>What's happening</h3>
@@ -343,44 +343,65 @@ tr.warn td input.reason-in { border-color: var(--warn); }
 'use strict';
 
 /* ---------- Made-up data ---------- */
+// Days from today until the next Dec 31, so the party's deadlines track the real date.
+const NYE = (() => { const t = new Date(); t.setHours(0, 0, 0, 0); const d = new Date(t.getFullYear(), 11, 31); if (d < t) d.setFullYear(d.getFullYear() + 1); return Math.max(6, Math.round((d - t) / 86400000)); })();
 const DEFAULT_SERVICES = {
-  demolition: {
-    id: 'demolition', name: 'Demolition permit', ask: 'How do I get a demolition permit?',
-    office: 'Permits Office', reviewed: 'Sep 2026', suggestions: true,
-    keywords: ['demolition', 'demolish', 'tear down', 'knock down', 'teardown'],
-    answer: 'To get a demolition permit in Maple Town, apply online with a site plan and proof of ownership. Most applications are reviewed within 10 business days.',
-    steps: [
-      { id: 'd1', title: 'Shut off utilities', days: 7, reason: 'Gas, water and power must be off before demolition starts. Most people with a demolition permit need this next.', detail: 'Ask each utility to disconnect service at the address. Keep the confirmation numbers for your inspection.' },
-      { id: 'd2', title: 'Get a dumpster permit', days: 10, reason: 'A dumpster on the street needs its own permit. Many demolition projects need one.', detail: 'Apply for a right-of-way permit if the dumpster will sit on the street or sidewalk.' },
-      { id: 'd3', title: 'Book the final inspection', days: 30, reason: 'The permit closes only after an inspector signs off.', detail: 'Book online once the site is cleared. An inspector checks the lot is level and safe.' }
-    ]
-  },
-  business: {
-    id: 'business', name: 'Home business license', ask: 'How do I start a home business?',
-    office: 'Business Licensing', reviewed: 'Aug 2026', suggestions: true,
-    keywords: ['business', 'license', 'licence', 'shop', 'side hustle', 'sell'],
-    answer: 'To run a business from home in Maple Town, apply for a home business license online. You will need your address and a short description of the business.',
-    steps: [
-      { id: 'b1', title: 'Check home business zoning', days: 14, reason: 'Some home businesses need a zoning check before the license is approved.', detail: 'Look up your address on the zoning map. Businesses with customer visits may need extra approval.' },
-      { id: 'b2', title: 'Register for town business tax', days: 30, reason: 'Every licensed business needs a town tax account within 30 days.', detail: 'Create a business tax account with your license number.' },
-      { id: 'b3', title: 'Post your license on site', days: 35, reason: 'Inspectors ask to see the license at the business address.', detail: 'Print the license and keep it where you work.' },
-      { id: 'b4', title: 'Renew your license', days: 365, reason: 'Licenses expire after one year.', detail: 'Renew online before the expiry date to avoid a late fee.' }
-    ]
-  },
-  event: {
-    id: 'event', name: 'Park event permit', ask: 'How do I hold an event in a park?',
+  gym: {
+    id: 'gym', name: 'Turn a playground into an outdoor gym', ask: 'How does our neighborhood turn the playground into an outdoor gym?',
     office: 'Parks Department', reviewed: 'Sep 2026', suggestions: true,
-    keywords: ['park', 'event', 'festival', 'party', 'picnic', 'gathering'],
-    answer: 'To hold an event in a Maple Town park, reserve the site online at least 30 days ahead. Events with more than 100 people also need a park event permit.',
+    keywords: ['playground', 'outdoor gym', 'gym', 'fitness', 'workout', 'exercise'],
+    answer: 'Neighborhood groups can propose changes to a Maple Town playground through the Parks Department\'s community project program. Projects are reviewed within 15 business days.',
     steps: [
-      { id: 'e1', title: 'Send proof of event insurance', days: 14, reason: 'Events with more than 100 people need insurance on file before the permit is final.', detail: 'Upload a certificate of insurance that names the Town of Maple Town.' },
-      { id: 'e2', title: 'Apply for a noise permit', days: 21, reason: 'Speakers or live music in a park need their own permit.', detail: 'Apply if you will use amplified sound after 6 p.m.' },
-      { id: 'e3', title: 'Order trash and recycling bins', days: 25, reason: 'Organizers of large events arrange their own bins.', detail: 'Order bins from Public Works at least 5 days before the event.' },
-      { id: 'e4', title: 'Book the post-event walkthrough', days: 31, reason: 'Your deposit is returned after staff check the site.', detail: 'A staff member walks the site with you the day after the event.' }
+      { id: 'g1', title: 'Get the Parks Department\'s approval', days: 21, reason: 'Changes to a town playground start with a community project application.', detail: 'Submit the idea with neighbor signatures and a simple sketch of the site.' },
+      { id: 'g2', title: 'Plan removal of the old equipment', days: 35, reason: 'Old play equipment has to be removed and disposed of safely before anything new goes in.', detail: 'Parks staff or an approved contractor takes it out, and usable parts are recycled.' },
+      { id: 'g3', title: 'Get the equipment installation permit', days: 50, reason: 'Gym equipment is bolted into concrete footings, which need a permit.', detail: 'Submit the equipment specs and the footing plan from the manufacturer.' },
+      { id: 'g4', title: 'Pass the safety surface inspection', days: 70, reason: 'The ground under the equipment must cushion falls before the gym opens.', detail: 'An inspector checks the depth and condition of the rubber or mulch surface.' },
+      { id: 'g5', title: 'Pass the accessibility review', days: 80, reason: 'The gym must be usable by people with disabilities.', detail: 'Paths, spacing and at least one accessible station are checked.' }
+    ]
+  },
+  worship: {
+    id: 'worship', name: 'Build a place of worship', ask: 'How do I build a place of worship?',
+    office: 'Planning and Zoning Office', reviewed: 'Aug 2026', suggestions: true,
+    keywords: ['worship', 'church', 'temple', 'mosque', 'synagogue', 'gurdwara', 'religious', 'chapel'],
+    answer: 'To build a place of worship in Maple Town, start with the Planning and Zoning Office. Places of worship are allowed in most zones after a site plan review.',
+    steps: [
+      { id: 'w1', title: 'Check zoning for the site', days: 14, reason: 'Zoning sets what can be built on the site and how large it can be.', detail: 'Look up the site on the zoning map, or ask the Planning and Zoning Office for a zoning letter.' },
+      { id: 'w2', title: 'Submit the site plan', days: 30, reason: 'New buildings for public gatherings need a site plan review.', detail: 'Show the building, entrances, landscaping and drainage on one plan.' },
+      { id: 'w3', title: 'Get the building permit', days: 60, reason: 'Construction can start only after the building permit is issued.', detail: 'Apply with construction drawings stamped by a licensed architect or engineer.' },
+      { id: 'w4', title: 'Get the parking plan approved', days: 75, reason: 'Gathering places need enough parking for their largest services.', detail: 'Show the number of spaces, accessible spaces and how cars enter and leave.' },
+      { id: 'w5', title: 'Get the certificate of occupancy', days: 180, reason: 'The building can open to the public only after a final certificate.', detail: 'Book final inspections for building, fire and accessibility.' }
+    ]
+  },
+  nye: {
+    id: 'nye', name: "New Year's Eve party", ask: "How do I throw a New Year's Eve party in the park?",
+    office: 'Parks Department', reviewed: 'Sep 2026', suggestions: true,
+    keywords: ['new year', 'nye', 'party', 'fireworks', 'celebration', 'picnic', 'countdown'],
+    answer: "To hold a New Year's Eve party in a Maple Town park, reserve the site online. Parties with more than 100 people also need a park event permit.",
+    steps: [
+      { id: 'n1', title: 'Reserve the park site', days: Math.max(1, NYE - 45), reason: 'Popular sites book up weeks before New Year\'s Eve.', detail: 'Pick a site and pay the reservation fee online.' },
+      { id: 'n2', title: 'Get a fireworks and noise permit', days: Math.max(2, NYE - 21), reason: 'Fireworks and music after 10 p.m. need their own permit.', detail: 'Apply if you will use fireworks or amplified sound. Fire safety reviews each request.' },
+      { id: 'n3', title: 'Send proof of event insurance', days: Math.max(3, NYE - 14), reason: 'Parties with more than 100 people need insurance on file before the permit is final.', detail: 'Upload a certificate of insurance that names the Town of Maple Town.' },
+      { id: 'n4', title: 'Order trash and recycling bins', days: Math.max(4, NYE - 5), reason: 'Organizers of large events arrange their own bins.', detail: 'Order bins from Public Works at least 5 days before the event.' },
+      { id: 'n5', title: 'Book the Jan 1 walkthrough', days: NYE + 1, reason: 'Your deposit is returned after staff check the site the morning after.', detail: 'A staff member walks the site with you on New Year\'s Day.' }
+    ]
+  },
+  floor: {
+    id: 'floor', name: 'Add an extra floor', ask: 'How do I add an extra floor to my house?',
+    office: 'Building Department', reviewed: 'Sep 2026', suggestions: true,
+    keywords: ['floor', 'storey', 'story', 'addition', 'add a level', 'second level', 'build up', 'extend'],
+    answer: 'To add a floor to your home in Maple Town, you will need a building permit. Most home additions are reviewed within 15 business days.',
+    steps: [
+      { id: 'f1', title: 'Check the height limit for your zone', days: 14, reason: 'Every zone caps how tall a house can be, so check before you design.', detail: 'Look up your address on the zoning map. Most home zones allow two or three floors.' },
+      { id: 'f2', title: 'Get structural plans stamped', days: 30, reason: 'A new floor adds weight, so an engineer must confirm the house can carry it.', detail: 'Hire a licensed structural engineer to review and stamp the plans.' },
+      { id: 'f3', title: 'Get the building permit', days: 45, reason: 'Work can start only after the building permit is issued.', detail: 'Apply online with the stamped plans.' },
+      { id: 'f4', title: 'Pass the framing inspection', days: 100, reason: 'An inspector checks the new frame before walls are closed in.', detail: 'Book online when framing is done and before insulation goes in.' },
+      { id: 'f5', title: 'Pass the final inspection', days: 160, reason: 'The new floor can be lived in only after it passes the final inspection.', detail: 'Book online once the work is finished.' }
     ]
   }
 };
-const ORDER = ['demolition', 'business', 'event'];
+// Display order of the chips; matching checks the most specific services first.
+const ORDER = ['floor', 'worship', 'nye', 'gym'];
+const MATCH_ORDER = ['nye', 'worship', 'floor', 'gym'];
 const CONTACT = { text: '(555) 010-0147', email: 'resident@example.com', chat: '' };
 const CHANNEL = {
   text:  { label: 'Text',    noun: 'text',         app: 'Messages',         stop: 'Reply STOP anytime.' },
@@ -394,7 +415,7 @@ let services = clone(DEFAULT_SERVICES);
 let reminders = [];
 let session = freshSession();
 let busy = false;
-let agencySel = 'demolition';
+let agencySel = 'gym';
 const demo = { token: 0, running: false };
 
 function freshSession() { return { done: new Set(), declined: new Set(), notForMe: new Set() }; }
@@ -493,7 +514,7 @@ function serviceChips() {
 
 function matchService(text) {
   const t = text.toLowerCase();
-  return ORDER.map((id) => services[id]).find((s) => s.keywords.some((k) => t.includes(k)));
+  return MATCH_ORDER.map((id) => services[id]).find((s) => s.keywords.some((k) => t.includes(k)));
 }
 
 async function ask(text) {
@@ -504,7 +525,7 @@ async function ask(text) {
   bubble('user', text);
   const svc = matchService(text);
   if (!svc) {
-    await botSay('This demo knows three made-up Maple Town services. Try one of these:');
+    await botSay('This demo knows four made-up Maple Town services. Try one of these:');
     serviceChips();
     narrate('The prototype answers from a script. Real questions would go to the agent as they do today.');
     busy = false; return;
@@ -864,7 +885,7 @@ async function playDemo() {
   showTab('resident');
   try {
     restart(); await demoWait(700, my);
-    const input = $('#q'); const q = services.demolition.ask;
+    const input = $('#q'); const q = services.gym.ask;
     for (const ch of q) { input.value += ch; await demoWait(35, my); }
     await demoWait(300, my); input.value = '';
     await ask(q); if (demo.token !== my) return;
