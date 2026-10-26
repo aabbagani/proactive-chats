@@ -4,8 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2064%2064%27%3E%3Cline%20x1%3D%2732%27%20y1%3D%2744%27%20x2%3D%2732%27%20y2%3D%2761%27%20stroke%3D%27%238a3b12%27%20stroke-width%3D%273%27%20stroke-linecap%3D%27round%27/%3E%3Cpath%20d%3D%27M32%204%20L36%2014%20L41%2011%20L39%2024%20L48%2017%20L50%2022%20L58%2020%20L54%2030%20L60%2033%20L46%2042%20L48%2048%20L34%2045%20L30%2045%20L16%2048%20L18%2042%20L4%2033%20L10%2030%20L6%2020%20L14%2022%20L16%2017%20L25%2024%20L23%2011%20L28%2014%20Z%27%20fill%3D%27%23e9772b%27%20stroke%3D%27%23d9531e%27%20stroke-width%3D%272.5%27%20stroke-linejoin%3D%27round%27/%3E%3C/svg%3E">
-<title>Proactive Chats · The Answer After the Answer</title>
-<meta name="description" content="Concept prototype: a government AI agent that suggests the next steps of a service and sends reminders only when a resident asks. Independent case study with made-up data.">
+<title>Proactive Chats · A concept for Granicus' GXA</title>
+<meta name="description" content="A concept for Granicus' GXA AI agent: after an answer, show the next steps and send a reminder only if the resident asks. Independent case study with made-up data.">
+<link rel="canonical" href="https://proactive.abbagani.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Proactive Chats">
+<meta property="og:title" content="Proactive Chats: a concept for Granicus&#39; GXA AI agent">
+<meta property="og:description" content="After an AI agent answers, it shows the next steps and sends a reminder only if you ask. Try the interactive prototype.">
+<meta property="og:url" content="https://proactive.abbagani.com/">
+<meta property="og:image" content="https://proactive.abbagani.com/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A phone showing a chat where the agent answers a question, then lists the next steps with reminders.">
+<meta name="twitter:card" content="summary_large_image">
 <style>
 :root {
   --bg: #f4f5f7; --surface: #ffffff; --surface-2: #eef0f2; --ink: #1d1b1a; --muted: #5d6166;
@@ -42,16 +53,17 @@ button { cursor: pointer; }
 .brand-sub { font-size: 14px; color: var(--muted); }
 .brand-sub b.pc { color: var(--ink); }
 .brand-sub b { color: var(--title-3); font-weight: 700; }
-.brand .tag { font-size: 12px; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 2px 8px; border-radius: 99px; }
 .tabs { display: flex; gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 10px; }
 .tabs button { border: 0; background: transparent; padding: 6px 12px; border-radius: 7px; font-weight: 600; color: var(--muted); }
-.tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
-.disclaimer { font-size: 13px; color: var(--muted); padding: 10px 0 0; margin: 0; }
+.tabs button[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.byline { font-size: 13px; color: var(--muted); margin: 0; padding: 14px 0 28px; border-top: 1px solid var(--line); }
+.byline a { color: var(--accent); }
 .lede { margin: 6px 0 18px; font-size: 15px; max-width: 760px; }
+.lede.wide { max-width: none; }
 
 /* Resident view layout */
 .stage { display: grid; grid-template-columns: 390px 1fr; gap: 28px; align-items: start; padding-bottom: 40px; }
-@media (max-width: 860px) { .stage { grid-template-columns: 1fr; gap: 14px; } .stage > .side { display: contents; } .stage .try { order: -1; } }
+@media (max-width: 860px) { .stage { grid-template-columns: 1fr; gap: 14px; } .stage > .side { display: contents; } .stage .try { order: -2; } .stage .whats { order: -1; } }
 
 /* Phone */
 .phone { position: relative; width: 100%; max-width: 390px; height: 720px; margin: 0 auto; background: var(--surface); border: 10px solid #1d242c; border-radius: 40px; box-shadow: var(--shadow); overflow: hidden; border-color: #2a2226; display: flex; flex-direction: column; }
@@ -85,6 +97,7 @@ button { cursor: pointer; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; animation: rise .25s ease-out; }
 .chip { border: 1px solid var(--accent); color: var(--accent); background: var(--surface); border-radius: 99px; padding: 5px 11px; font-size: 13px; font-weight: 600; }
 .chip:hover { background: var(--accent-soft); }
+.chip.go { background: var(--accent-soft); }
 
 /* Next-step cards */
 .nextsteps { align-self: stretch; animation: rise .35s ease-out; }
@@ -100,6 +113,7 @@ button { cursor: pointer; }
 .linkish { border: 0; background: transparent; color: var(--accent); text-decoration: underline; padding: 0; font-size: 12px; }
 .track-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 2px 2px 6px; }
 .track-head h4 { margin: 0; }
+.tap-hint { margin: 0 2px 8px; font-size: 12px; color: var(--muted); }
 .track-head span { font-size: 12px; font-weight: 700; color: var(--ok); white-space: nowrap; }
 .bar { height: 5px; border-radius: 99px; background: var(--surface-2); margin: 0 2px 8px; overflow: hidden; }
 .bar i { display: block; height: 100%; background: var(--ok); border-radius: 99px; transition: width .4s ease; }
@@ -142,6 +156,8 @@ legend { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
 .radio label:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
 .field { display: block; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
 .field textarea { display: block; width: 100%; margin-top: 4px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 8px 10px; font-size: 14px; color: var(--ink); min-height: 72px; resize: vertical; font-family: inherit; }
+.qs { margin: 0 0 14px; }
+.qs h3 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--title-3); }
 .reports { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 12px; }
 .reports h3 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--title-3); }
 .reports li { margin-bottom: 6px; font-size: 14px; }
@@ -176,6 +192,12 @@ legend { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
 .events .props { color: var(--muted); font-family: var(--mono); font-size: 12px; }
 .events-empty { color: var(--muted); font-size: 13px; margin: 0; }
 .fine { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+details.panel > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+details.panel > summary::-webkit-details-marker { display: none; }
+details.panel > summary h3 { margin: 0; }
+details.panel > summary::after { content: 'Show'; font-size: 12px; font-weight: 700; color: var(--muted); }
+details.panel[open] > summary::after { content: 'Hide'; }
+details.panel[open] > summary { margin-bottom: 6px; }
 
 /* Demo highlight */
 .pulse { animation: pulse .7s ease-in-out; position: relative; z-index: 2; }
@@ -204,21 +226,31 @@ tr.warn td input.reason-in { border-color: var(--warn); }
 .agency-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
 .agency-foot .btn { width: auto; display: inline-block; margin: 0; padding: 8px 14px; }
 
-/* How it works */
+/* How it works: plain sections divided by lines; only the two chats are boxed */
 .how { padding-bottom: 40px; }
-.steps4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 10px 0 20px; }
-@media (max-width: 860px) { .steps4 { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 480px) { .steps4 { grid-template-columns: 1fr; } }
-.steps4 .card { padding: 14px; }
-.steps4 .n { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 700; font-size: 13px; margin-bottom: 6px; }
-.steps4 h3 { margin: 0 0 4px; font-size: 15px; color: var(--title-2); }
-.two h3 { color: var(--title-2); }
+.how .card { background: none; border: 0; border-radius: 0; padding: 0; }
+.how > .two { padding: 24px 0; border-top: 1px solid var(--line); }
+.two h3 { margin: 0 0 4px; font-size: 15px; color: var(--ink); }
 .agent b { color: var(--title); }
-.steps4 p { margin: 0; font-size: 14px; color: var(--muted); }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 @media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
 .two ul { margin: 6px 0 0; padding-left: 18px; }
-.two li { margin-bottom: 4px; }
+.two li { margin-bottom: 4px; text-wrap: pretty; }
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0 28px; }
+@media (max-width: 700px) { .compare { grid-template-columns: 1fr; } }
+.how .compare .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.how .compare .card.after { border-color: var(--accent); }
+.compare h3 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.compare .card.after h3 { color: var(--accent); }
+.compare .card:not(.after) .msg.user { background: var(--muted); color: var(--bg); }
+.compare .mock { display: flex; flex-direction: column; gap: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px; flex: 1; }
+.compare .mock .msg { animation: none; }
+.compare .mock .step-card { animation: none; margin-bottom: 0; }
+.compare .mock .nextsteps { animation: none; display: flex; flex-direction: column; gap: 6px; }
+.compare .mock .step-open { padding-bottom: 10px; cursor: default; }
+.compare .mock .note { animation: none; }
+.compare p { margin: 0; font-size: 14px; color: var(--muted); }
+.compare p b { color: var(--ink); }
 
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
@@ -234,30 +266,27 @@ tr.warn td input.reason-in { border-color: var(--warn); }
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><linearGradient id="leafGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7a23b"/><stop offset="1" stop-color="#d9531e"/></linearGradient><symbol id="leafSym" viewBox="0 0 64 64"><line x1="32" y1="44" x2="32" y2="61" stroke="#8a3b12" stroke-width="3" stroke-linecap="round"/><path d="M32 4 L36 14 L41 11 L39 24 L48 17 L50 22 L58 20 L54 30 L60 33 L46 42 L48 48 L34 45 L30 45 L16 48 L18 42 L4 33 L10 30 L6 20 L14 22 L16 17 L25 24 L23 11 L28 14 Z" fill="url(#leafGrad)" stroke="#e0661f" stroke-width="2.5" stroke-linejoin="round"/><g stroke="#a8430f" stroke-width="1.2" stroke-linecap="round" opacity=".45" fill="none"><path d="M32 44 L32 12"/><path d="M32 36 L49 21"/><path d="M32 36 L15 21"/><path d="M32 41 L53 32"/><path d="M32 41 L11 32"/></g></symbol></defs></svg>
 <header class="top">
   <div class="wrap">
-    <div class="brand-wrap"><div class="brand">The Answer After the Answer <span class="tag">Concept</span></div><div class="brand-sub"><b class="pc">Proactive Chats</b>, live in <b>Maple Town</b></div></div>
+    <div class="brand-wrap"><div class="brand">Proactive Chats</div><div class="brand-sub">A concept for <b>Granicus</b>' GXA AI agent</div></div>
     <div class="tabs" role="tablist" aria-label="Views">
       <button role="tab" id="t-resident" aria-controls="p-resident" aria-selected="true">Resident view</button>
-      <button role="tab" id="t-agency" aria-controls="p-agency" aria-selected="false" tabindex="-1">Agency step lists</button>
       <button role="tab" id="t-how" aria-controls="p-how" aria-selected="false" tabindex="-1">How it works</button>
+      <button role="tab" id="t-agency" aria-controls="p-agency" aria-selected="false" tabindex="-1">For agencies</button>
     </div>
   </div>
 </header>
 
-<div class="wrap">
-  <p class="disclaimer">Independent case study, not an official Granicus product. Maple Town is a made-up town, and every service, step, date and contact here is made up. Nothing is sent.</p>
-</div>
-
 <main class="wrap">
   <!-- Resident view -->
   <section id="p-resident" role="tabpanel" aria-labelledby="t-resident">
-    <p class="lede"><b>Maple Town</b> runs an AI help agent for its residents. This demo adds <b>Proactive Chats</b> to it: after an answer, the agent shows the <b>next steps</b> people usually need, each with a reason, and tracks a deadline only if the resident taps <b>Remind me</b>.</p>
+    <p class="lede wide"><b>Granicus</b>, a GovTech company, created GXA, an AI agent that answers residents' questions for local governments. My idea is to take that one step further. With <b>Proactive Chats</b>, after an answer the agent shows the <b>next steps</b> people usually need and tracks a deadline only if the resident taps <b>Remind me</b>.</p>
+    <p class="lede">To try it, we're simulating a made-up town called <b>Maple Town</b>, whose residents are using Proactive Chats.<br>Pick a question in the chat, or press <b>Play demo</b>, and let's see how it goes.</p>
     <div class="stage">
       <div class="phone" id="phone">
         <div class="notif" id="notif" role="alert" aria-hidden="true"></div>
         <div class="phone-head">
           <div class="agent">
             <span class="leaf wave" id="mascot" aria-hidden="true"><svg viewBox="0 0 64 64"><use href="#leafSym"/><g class="eyes" fill="#4a1f05"><circle cx="27" cy="30" r="2.6"/><circle cx="37" cy="30" r="2.6"/></g><circle cx="23.5" cy="35" r="2.2" fill="#ff8a8a" opacity=".55"/><circle cx="40.5" cy="35" r="2.2" fill="#ff8a8a" opacity=".55"/><path d="M28.5 35.5 Q32 39 35.5 35.5" stroke="#4a1f05" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></span>
-            <div><b>Maple Town Help</b><span>AI agent · answers from town pages</span></div>
+            <div><b>Proactive Chats</b><span>for Maple Town · answers from town pages</span></div>
           </div>
           <button class="ghost" id="myReminders">My reminders</button>
         </div>
@@ -276,21 +305,21 @@ tr.warn td input.reason-in { border-color: var(--warn); }
           <h3>Try it</h3>
           <div class="controls">
             <button class="play" id="play">▶ Play demo</button>
-            <button id="skip" disabled>Skip to reminder day</button>
+            <button id="skip" disabled>Jump ahead to the reminder</button>
             <button id="restart">Restart</button>
           </div>
-          <p class="fine">Pick a service in the chat, or type a question. The demo plays the playground-to-outdoor-gym story in about 30 seconds.</p>
+          <p class="fine">Pick a service in the chat, or type a question. The demo plays the extra-floor story in about 30 seconds. Set a reminder on any step to unlock <b>Jump ahead to the reminder</b>.</p>
         </div>
-        <div class="panel">
+        <div class="panel whats">
           <h3>What's happening</h3>
           <p id="narration"></p>
         </div>
-        <div class="panel">
-          <h3>Events tracked</h3>
+        <details class="panel">
+          <summary><h3>Events tracked</h3></summary>
           <p class="events-empty" id="eventsEmpty">Nothing yet. Each tap logs the event that would feed a metric.</p>
           <ol class="events" id="events"></ol>
           <p class="fine">Repeat calls come from the agency's call logs, so they can't be shown here.</p>
-        </div>
+        </details>
       </aside>
     </div>
   </section>
@@ -305,17 +334,42 @@ tr.warn td input.reason-in { border-color: var(--warn); }
   <!-- How it works -->
   <section id="p-how" role="tabpanel" aria-labelledby="t-how" class="how" hidden>
     <p class="lede">Proactive Chats adds one thing to a government AI agent: after an answer, offer the next step, and track it only if the resident agrees.</p>
-    <div class="steps4">
-      <div class="card"><div class="n">1</div><h3>Ask</h3><p>The resident asks a question. The agent answers as it does today.</p></div>
-      <div class="card"><div class="n">2</div><h3>See next steps</h3><p>Every next step from the agency's list, in order, each with a reason.</p></div>
-      <div class="card"><div class="n">3</div><h3>Opt in</h3><p>Remind me shows the channel and schedule before anything is tracked.</p></div>
-      <div class="card"><div class="n">4</div><h3>Remind and close</h3><p>One reminder before the deadline, with Done, Snooze and Stop. The list tracks what's left.</p></div>
+    <div class="compare">
+      <div class="card">
+        <h3>Granicus today</h3>
+        <div class="mock" aria-label="Example of a chat today">
+          <div class="msg user">How do I add an extra floor to my house?</div>
+          <div class="msg bot">You'll need a building permit. Most home additions are reviewed within 15 business days. Is there anything else I can help you with?</div>
+          <div class="msg user">Ok, can I apply now?</div>
+          <div class="msg bot">Yes, you can apply online with structural plans stamped by an engineer. Is there anything else I can help you with?</div>
+          <div class="msg user">Oh. Is there anything I should do before that?</div>
+          <div class="msg bot">Yes, check your zone's height limit before you design. Is there anything else I can help you with?</div>
+          <div class="msg user">I feel like I'm missing something, but I don't know what to ask.</div>
+          <div class="note">…the resident has to know what to ask.</div>
+        </div>
+        <p class="fine">Illustration, based on Granicus' public GXA page.</p>
+      </div>
+      <div class="card after">
+        <h3>Granicus with Proactive Chats</h3>
+        <div class="mock" aria-label="Example of a chat with Proactive Chats">
+          <div class="msg user">How do I add an extra floor to my house?</div>
+          <div class="msg bot">You'll need a building permit. Most home additions are reviewed within 15 business days. Here's everything that comes with it:</div>
+          <div class="nextsteps">
+            <div class="track-head"><h4>Your next steps</h4><span>0 of 5 done</span></div>
+            <div class="step-card s-reminded"><div class="step-open"><span class="dot">1</span><b>Check the height limit for your zone</b><span class="pill">Reminder set</span></div></div>
+            <div class="step-card s-todo"><div class="step-open"><span class="dot">2</span><b>Get structural plans stamped</b><span class="pill">Due in 30 days</span></div></div>
+            <div class="step-card s-todo"><div class="step-open"><span class="dot">3</span><b>Get the building permit</b><span class="pill">Due in 45 days</span></div></div>
+            <div class="step-card s-todo"><div class="step-open"><span class="dot">4</span><b>Pass the framing inspection</b><span class="pill">Due in 100 days</span></div></div>
+            <div class="step-card s-todo"><div class="step-open"><span class="dot">5</span><b>Pass the final inspection</b><span class="pill">Due in 160 days</span></div></div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="two">
       <div class="card">
         <h3>Rules it follows</h3>
         <ul>
-          <li>Steps come only from the agency's list. The agent never makes one up.</li>
+          <li>Steps come only from the agency's list, never made up.</li>
           <li>Every step shows why it's suggested, and the whole list stays visible.</li>
           <li>No reminder without a tap. Stop ends all reminders.</li>
           <li>One reminder per step. Same-day reminders arrive as one message.</li>
@@ -329,12 +383,16 @@ tr.warn td input.reason-in { border-color: var(--warn); }
           <li>The agency's own systems confirming a step is done.</li>
           <li>Other languages, and steps that belong to other agencies.</li>
           <li>Phone and in-person service.</li>
-          <li>Time passing. "Skip to reminder day" stands in for it.</li>
+          <li>Time passing. "Jump ahead to the reminder" stands in for it.</li>
         </ul>
       </div>
     </div>
   </section>
 </main>
+
+<footer class="wrap">
+  <p class="byline">Built by Anvitha Abbagani · <a href="https://abbagani.com" target="_blank" rel="noopener">abbagani.com</a> · <a href="https://abbagani.com/assets/projects/proactive-chats-prd.pdf" target="_blank" rel="noopener">Read the PRD (PDF)</a></p>
+</footer>
 
 <noscript><p class="wrap">This prototype needs JavaScript.</p></noscript>
 
@@ -399,6 +457,92 @@ const DEFAULT_SERVICES = {
     ]
   }
 };
+// Questions residents ask about each step, written by the agency next to the step. [question, answer, phrases that match a typed question]
+const STEP_QUESTIONS = {
+  g1: [
+    ["Who do I send the application to?", "Send it to the Parks Department's community project desk at parks@mapletown.example, or drop it off at Town Hall, room 12.", ['who do i send', 'where do i send', 'send the application', 'submit the application', 'who approves']],
+    ["How many neighbor signatures do I need?", "At least 25, from households within two blocks of the playground.", ['signature', 'how many neighbors']]
+  ],
+  g2: [
+    ["Who removes the old equipment?", "Parks staff do it for free on community projects. You can also hire a contractor from the town's approved list.", ['who removes', 'who takes', 'removal', 'remove the old']],
+    ["Can the old equipment be reused?", "Often, yes. Parks recycles usable parts and can donate whole pieces to other town playgrounds.", ['reuse', 'reused', 'donate', 'recycle']]
+  ],
+  g3: [
+    ["Where do I get the permit from?", "Apply online at mapletown.example/gym or at the Building Department counter in Town Hall. The Parks Department confirms your project first.", ['where do i get the permit', 'where can i get the permit', 'where to get the permit', 'permit from', 'installation permit']],
+    ["How much does the permit cost?", "$85 for community projects. The fee is waived for registered neighborhood groups.", ['permit cost', 'permit fee', 'how much is the permit', 'how much does the permit']]
+  ],
+  g4: [
+    ["How do I book the inspection?", "Book online at mapletown.example/gym once the surface is in. An inspector visits within 5 business days.", ['book the inspection', 'book an inspection', 'schedule the inspection', 'how do i book']],
+    ["Which surfaces pass?", "Poured rubber, or at least 9 inches of engineered wood fiber. The inspector measures the depth in several spots.", ['which surface', 'what surface', 'mulch', 'rubber', 'wood fiber']]
+  ],
+  g5: [
+    ["What does the review check?", "That a wheelchair can reach the gym on a firm path, and that at least one station can be used from a seated position.", ['what does the review', 'wheelchair', 'accessible station', 'accessibility review']],
+    ["Who does the review?", "A Parks Department accessibility officer, usually on the same visit as the final walkthrough.", ['who does the review', 'who reviews', 'accessibility officer']]
+  ],
+  w1: [
+    ["Where do I find the zoning map?", "It's at mapletown.example/zoning. Type in the site's address and it shows the zone.", ['zoning map', 'where do i find', 'what zone', 'look up the site']],
+    ["What is a zoning letter?", "A one-page letter from the Planning and Zoning Office confirming what the site's zone allows. It takes about 5 business days and is free.", ['zoning letter']]
+  ],
+  w2: [
+    ["Where do I get the permit from?", "Apply to the Planning and Zoning Office, online at mapletown.example/worship or at the Town Hall counter.", ['where do i get the permit', 'where can i get the permit', 'where to get the permit', 'permit from', 'special use permit']],
+    ["Who can speak at the public hearing?", "Anyone who lives within 500 feet can speak or send a note. The hearing is open to everyone.", ['hearing', 'who can speak', 'who can comment']]
+  ],
+  w3: [
+    ["What goes on a site plan?", "The building outline, entrances, parking spaces, landscaping and where rainwater drains. A template is at mapletown.example/worship.", ['what goes on', 'what is a site plan', 'site plan include', 'site plan template']],
+    ["Do I need an architect to draw it?", "No. A licensed surveyor or your own group can draw it, as long as it's to scale.", ['architect to draw', 'who draws', 'draw it', 'surveyor']]
+  ],
+  w4: [
+    ["Where do I get the permit from?", "Apply online with your stamped construction drawings, or at the Building Department counter in Town Hall.", ['where do i get the permit', 'where can i get the permit', 'where to get the permit', 'permit from', 'building permit']],
+    ["How long does the review take?", "About 20 business days for a building this size.", ['how long', 'review take', 'how many days']]
+  ],
+  w5: [
+    ["Who inspects the building?", "Three inspectors visit: building, fire and accessibility. You can book them for the same day.", ['who inspects', 'which inspections', 'inspectors']],
+    ["Can we hold services before the certificate?", "No. The building can't open to the public until the certificate is issued.", ['hold services', 'open early', 'before the certificate', 'use the building']]
+  ],
+  n1: [
+    ["How much does it cost to reserve?", "$150 for the shelter or $400 for the main lawn, plus a $200 deposit that is refunded after the Jan 1 walkthrough.", ['how much to reserve', 'cost to reserve', 'reservation fee', 'reserve cost', 'how much is the site']],
+    ["Can I reserve by phone?", "Yes. Call Parks at (555) 010-0150 on weekdays, 9 to 5. Online is faster.", ['by phone', 'reserve by phone', 'call parks', 'in person']]
+  ],
+  n2: [
+    ["Where do I get the permit from?", "Apply to the Fire Marshal's office online at mapletown.example/nye. The Parks Department can't issue it.", ['where do i get the permit', 'where can i get the permit', 'where to get the permit', 'permit from', 'fireworks permit', 'noise permit']],
+    ["Are fireworks allowed in the park?", "Only licensed displays run by a certified company. Sparklers are fine, and other fireworks aren't.", ['fireworks allowed', 'allowed in the park', 'sparklers', 'can i have fireworks']]
+  ],
+  n3: [
+    ["Who do I send the insurance certificate to?", "Upload it at mapletown.example/nye, or email it to risk@mapletown.example. It has to name the Town of Maple Town.", ['to who', 'who do i send', 'send it to', 'send the insurance', 'send proof', 'certificate to']],
+    ["Where do I get event insurance?", "Most home insurers and event insurance companies sell one-day policies, usually $50 to $150. You need $1 million in liability coverage.", ['get event insurance', 'get insurance', 'buy insurance', 'one-day', 'coverage']]
+  ],
+  n4: [
+    ["How do I order the bins?", "Order at mapletown.example/nye or call Public Works at (555) 010-0160. Plan on one bin per 50 guests.", ['order the bins', 'order bins', 'how many bins', 'who do i call']],
+    ["Who picks the bins up?", "Public Works collects them the morning of Jan 2. Leave them where they were dropped off.", ['pick up', 'picks up', 'collect the bins']]
+  ],
+  n5: [
+    ["How do I book the walkthrough?", "Choose a time at mapletown.example/nye. Slots run from 9 a.m. to noon on Jan 1.", ['book the walkthrough', 'schedule the walkthrough', 'walkthrough']],
+    ["When do I get my deposit back?", "Within 10 business days of a clean walkthrough.", ['deposit back', 'get my deposit', 'refund', 'my deposit']]
+  ],
+  f1: [
+    ["Where do I find my zone's height limit?", "Look up your address on the zoning map at mapletown.example/floor. It lists the limit in floors and in feet.", ['height limit', 'zoning map', 'my zone', 'where do i find']],
+    ["Can I ask for an exception?", "Yes, you can ask for a variance. The Planning Office decides after a public notice, which takes about 6 weeks.", ['exception', 'variance', 'over the limit', 'higher than']]
+  ],
+  f2: [
+    ["Where do I find an engineer?", "Any licensed structural engineer can stamp them. The Building Department keeps a list of engineers who have worked in Maple Town.", ['find an engineer', 'which engineer', 'who stamps', 'structural engineer']],
+    ["How much does it cost?", "Typically $1,500 to $4,000 for a home addition, depending on the house.", ['how much does it cost', 'how much is it', 'engineer cost', 'plans cost']]
+  ],
+  f3: [
+    ["Where do I get the permit from?", "Apply online at mapletown.example/floor with your stamped plans, or at the Building Department counter in Town Hall.", ['where do i get the permit', 'where can i get the permit', 'where to get the permit', 'permit from', 'building permit']],
+    ["What does the permit cost?", "The fee is based on the value of the work, about 1% of the project cost.", ['permit cost', 'permit fee', 'how much is the permit', 'how much does the permit']]
+  ],
+  f4: [
+    ["How do I book the inspection?", "Book online at mapletown.example/floor when the frame is up. An inspector visits within 3 business days.", ['book the inspection', 'book an inspection', 'schedule the inspection', 'framing inspection', 'how do i book']],
+    ["What does the inspector look for?", "That the frame matches the stamped plans: beams, connections and bracing.", ['inspector look for', 'what do they check', 'what does the inspector']]
+  ],
+  f5: [
+    ["How do I book the final inspection?", "Book online at mapletown.example/floor once the work is finished. An inspector visits within 3 business days.", ['final inspection', 'book the final', 'how do i book']],
+    ["Can I move in before it passes?", "No. The new floor can't be lived in until it passes the final inspection.", ['move in', 'live in', 'use the new floor']]
+  ]
+};
+Object.values(DEFAULT_SERVICES).forEach((svc) => svc.steps.forEach((st) => {
+  st.faq = (STEP_QUESTIONS[st.id] || []).map(([q, a, k]) => ({ q, a, k }));
+}));
 // Display order of the chips; matching checks the most specific services first.
 const ORDER = ['floor', 'worship', 'nye', 'gym'];
 const MATCH_ORDER = ['nye', 'worship', 'floor', 'gym'];
@@ -406,7 +550,7 @@ const CONTACT = { text: '(555) 010-0147', email: 'resident@example.com', chat: '
 const CHANNEL = {
   text:  { label: 'Text',    noun: 'text',         app: 'Messages',         stop: 'Reply STOP anytime.' },
   email: { label: 'Email',   noun: 'email',        app: 'Mail',             stop: 'Every email has a Stop link.' },
-  chat:  { label: 'In chat', noun: 'chat message', app: 'Maple Town Help', stop: 'Tap Stop anytime.' }
+  chat:  { label: 'In chat', noun: 'chat message', app: 'Proactive Chats', stop: 'Tap Stop anytime.' }
 };
 
 /* ---------- State ---------- */
@@ -415,10 +559,10 @@ let services = clone(DEFAULT_SERVICES);
 let reminders = [];
 let session = freshSession();
 let busy = false;
-let agencySel = 'gym';
+let agencySel = 'floor';
 const demo = { token: 0, running: false };
 
-function freshSession() { return { done: new Set(), declined: new Set(), notForMe: new Set() }; }
+function freshSession() { return { done: new Set(), declined: new Set(), notForMe: new Set(), asked: new Set(), lastSvc: null, lastStep: null }; }
 const reports = [];
 
 /* ---------- Helpers ---------- */
@@ -528,6 +672,64 @@ function matchService(text) {
   return MATCH_ORDER.map((id) => services[id]).find((s) => s.keywords.some((k) => t.includes(k)));
 }
 
+// Best written question for a typed one. The service and step the resident was just on count for more,
+// so "where do I get the permit from?" means the permit in the conversation.
+function matchStepQuestion(text) {
+  const t = text.toLowerCase(); const hits = [];
+  ORDER.forEach((id) => {
+    const svc = services[id];
+    if (!svc.suggestions) return;
+    validSteps(svc).forEach((step) => (step.faq || []).forEach((f) => {
+      const matched = f.k.filter((p) => t.includes(p)); if (!matched.length) return;
+      const score = Math.max(...matched.map((p) => p.length)) + (svc.id === session.lastSvc ? 100 : 0) + (key(svc, step) === session.lastStep ? 50 : 0);
+      hits.push({ svc, step, f, score });
+    }));
+  });
+  hits.sort((a, b) => b.score - a.score);
+  if (!hits.length) return null;
+  const top = hits[0];
+  if (top.score < 100 && hits.some((h) => h !== top && h.score === top.score && h.svc !== top.svc)) return { unclear: true };
+  return top;
+}
+
+// Offers only the questions not yet asked about this step, then a way forward, so the chat never loops.
+function stepQuestionChips(svc, step) {
+  $$('.chips.sq').forEach((c) => c.remove());
+  const wrap = document.createElement('div');
+  wrap.className = 'chips sq';
+  (step.faq || []).filter((f) => !session.asked.has(key(svc, step) + '|' + f.q)).forEach((f) => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.type = 'button'; b.textContent = f.q;
+    b.addEventListener('click', () => askStepQuestion(svc, step, f));
+    wrap.append(b);
+  });
+  const steps = validSteps(svc);
+  const next = steps.slice(steps.indexOf(step) + 1).find((st) => stepStatus(svc, st).s !== 'done');
+  const go = document.createElement('button');
+  go.className = 'chip go'; go.type = 'button';
+  if (next) { go.textContent = 'Next step: ' + next.title; go.addEventListener('click', () => openStep(svc.id, next.id)); }
+  else { go.textContent = 'Show my steps'; go.addEventListener('click', () => renderTracker(svc)); }
+  wrap.append(go);
+  chat.append(wrap); scrollChat();
+}
+
+async function answerStepQuestion(svc, step, f) {
+  session.lastSvc = svc.id; session.lastStep = key(svc, step);
+  session.asked.add(key(svc, step) + '|' + f.q);
+  await botSay(f.a);
+  logEvent('Step question answered', { step: step.title, question: f.q });
+  stepQuestionChips(svc, step);
+  narrate('The agency writes answers to the common questions about each step, next to the step. The resident gets them here instead of calling to ask.');
+  busy = false;
+}
+
+async function askStepQuestion(svc, step, f) {
+  if (busy) return;
+  busy = true; closeSheet();
+  bubble('user', f.q);
+  await answerStepQuestion(svc, step, f);
+}
+
 async function ask(text) {
   text = text.trim();
   if (!text || busy) return;
@@ -535,16 +737,32 @@ async function ask(text) {
   closeSheet();
   bubble('user', text);
   const svc = matchService(text);
-  if (!svc) {
-    await botSay('This demo knows four made-up Maple Town services. Try one of these:');
+  const sq = matchStepQuestion(text);
+  if (sq && sq.unclear) {
+    await botSay('Which one do you mean? Pick a service and I\'ll answer from its steps:');
     serviceChips();
-    narrate('The prototype answers from a script. Real questions would go to the agent as they do today.');
+    narrate('Several services have a step like this, so the agent asks before answering.');
     busy = false; return;
   }
+  if (sq && (!svc || svc === sq.svc)) { await answerStepQuestion(sq.svc, sq.step, sq.f); return; }
+  if (!svc) {
+    const svcNow = session.lastSvc && services[session.lastSvc];
+    const stepNow = svcNow && svcNow.steps.find((st) => key(svcNow, st) === session.lastStep);
+    if (stepNow && (stepNow.faq || []).length) {
+      await botSay('I don\'t have an answer for that one yet. Here\'s what people often ask about "' + stepNow.title + '":');
+      stepQuestionChips(svcNow, stepNow);
+    } else {
+      await botSay('I don\'t have an answer for that one yet. Pick a service and I\'ll walk you through the steps:');
+      serviceChips();
+    }
+    narrate('When a question isn\'t on the agency\'s written lists, the agent says so and offers what it does have. Real questions would go to the agent as they do today.');
+    busy = false; return;
+  }
+  session.lastSvc = svc.id; session.lastStep = null;
   await botSay(svc.answer);
   if (!svc.suggestions || !validSteps(svc).length) {
     note('No next steps shown. The ' + svc.office + ' has turned suggestions off for this service.');
-    narrate('The agency switched next steps off for <b>' + esc(svc.name) + '</b>, so the resident gets the answer only. Agencies can do this for sensitive services. Switch it back on in <b>Agency step lists</b>.');
+    narrate('The agency switched next steps off for <b>' + esc(svc.name) + '</b>, so the resident gets the answer only. Agencies can do this for sensitive services. Switch it back on in <b>For agencies</b>.');
     busy = false; return;
   }
   renderTracker(svc);
@@ -575,7 +793,8 @@ function renderTracker(svc) {
   wrap.className = 'nextsteps'; wrap.dataset.svc = svc.id;
   wrap.innerHTML =
     '<div class="track-head"><h4>Your next steps · ' + esc(svc.name) + '</h4><span>' + doneN + ' of ' + steps.length + ' done</span></div>' +
-    '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + steps.length + '" aria-valuenow="' + doneN + '" aria-label="Steps done"><i style="width:' + Math.round(100 * doneN / steps.length) + '%"></i></div>';
+    '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + steps.length + '" aria-valuenow="' + doneN + '" aria-label="Steps done"><i style="width:' + Math.round(100 * doneN / steps.length) + '%"></i></div>' +
+    '<p class="tap-hint">Tap a step to set a reminder or ask a question.</p>';
   steps.forEach((step, i) => {
     const st = stepStatus(svc, step);
     const card = document.createElement('div');
@@ -616,7 +835,7 @@ function openSheet(html) {
   sheet.innerHTML = html;
   sheet.classList.add('show'); backdrop.classList.add('show');
   sheet.setAttribute('aria-hidden', 'false');
-  const f = $('button, input', sheet); if (f) setTimeout(() => f.focus({ preventScroll: true }), 50);
+  const f = $('.btn.primary', sheet) || $('button, input', sheet); if (f) setTimeout(() => f.focus({ preventScroll: true }), 50);
 }
 function closeSheet() {
   if (!sheet.classList.contains('show')) return;
@@ -643,6 +862,8 @@ function openStep(svcId, stepId) {
   if (st.s === 'done') return;
   const r = reminders.find((x) => x.key === k && x.status === 'scheduled');
   const { deadline } = remindDate(step);
+  const qs = (step.faq || []).length
+    ? '<div class="qs"><h3>Common questions</h3><div class="chips">' + step.faq.map((f, i) => '<button class="chip" type="button" data-q="' + i + '">' + esc(f.q) + '</button>').join('') + '</div></div>' : '';
   const actions = st.s === 'reminded'
     ? '<p class="preview">Reminder set: 1 ' + CHANNEL[r.channel].noun + ' on <b>' + fmt(r.on) + '</b>.</p>' +
       '<button class="btn primary" data-act="done">Mark as done</button>' +
@@ -655,8 +876,9 @@ function openStep(svcId, stepId) {
     '<p>' + esc(step.detail || 'See the agency page for details.') + '</p>' +
     '<dl class="facts"><dt>Due</dt><dd>' + fmt(deadline) + ' (in ' + daysUntil(deadline) + ' days)</dd>' +
     '<dt>From</dt><dd>Maple Town ' + esc(svc.office) + '</dd>' +
-    '<dt>More</dt><dd>mapletown.example/' + esc(svc.id) + '</dd></dl>' + actions
+    '<dt>More</dt><dd>mapletown.example/' + esc(svc.id) + '</dd></dl>' + qs + actions
   );
+  $$('[data-q]', sheet).forEach((b) => b.addEventListener('click', () => askStepQuestion(svc, step, step.faq[+b.dataset.q])));
   narrate(st.s === 'reminded'
     ? 'This step already has a reminder. The resident can finish it now or stop the reminder.'
     : 'The step opens with its deadline and source. The resident chooses: <b>Remind me</b>, <b>Already done</b>, or <b>Skip for now</b>.');
@@ -713,7 +935,7 @@ function openReport(svcId, stepId) {
     closeSheet();
     await botSay('Thanks. I\'ve sent your report to the ' + svc.office + '.');
     renderTracker(svc);
-    narrate('The report lands with the agency, comment included. Open <b>Agency step lists</b> to see it. Wrong-Step Reports is a guardrail metric.');
+    narrate('The report lands with the agency, comment included. Open <b>For agencies</b> to see it. Wrong-Step Reports is a guardrail metric.');
   });
 }
 
@@ -753,7 +975,7 @@ function openConsent(svcId, stepId, channel) {
     $('#skip').disabled = false;
     await botSay('Done. You\'ll get 1 ' + ch.noun + ' on ' + fmt(on) + ' about "' + step.title + '." ' + ch.stop);
     renderTracker(svc);
-    narrate('The reminder is set, and it is the <b>only</b> thing being tracked. The list still shows every step. Press <b>Skip to reminder day</b> to see it arrive.');
+    narrate('The reminder is set, and it is the <b>only</b> thing being tracked. The list still shows every step. Press <b>Jump ahead to the reminder</b> to see it arrive.');
   });
 }
 
@@ -873,7 +1095,7 @@ function restart() {
   $('#skip').disabled = true;
   $$('.falling').forEach((l) => l.remove());
   mood('wave');
-  bubble('bot', 'Hi, I\'m the Maple Town help agent. Ask me about a town service, or pick one:');
+  bubble('bot', 'Welcome to Maple Town! I\'m Proactive Chats. Here\'s how I can help out: ask me about a town service, or pick one below.');
   serviceChips();
   narrate('A resident opens the town\'s AI agent. Pick a service, or press <b>Play demo</b>.');
 }
@@ -894,9 +1116,10 @@ async function waitFor(fn, my, limit = 6000) {
 async function playDemo() {
   const my = ++demo.token; demo.running = true; setPlay();
   showTab('resident');
+  if (window.matchMedia('(max-width: 860px)').matches) $('.whats').scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' });
   try {
     restart(); await demoWait(700, my);
-    const input = $('#q'); const q = services.gym.ask;
+    const input = $('#q'); const q = services.floor.ask;
     // Setting .value doesn't scroll the box the way real typing does, so follow the cursor by hand.
     for (const ch of q) { input.value += ch; input.scrollLeft = input.scrollWidth; await demoWait(35, my); }
     await demoWait(300, my); input.value = '';
@@ -910,7 +1133,7 @@ async function playDemo() {
     await waitFor(() => !$('#skip').disabled && !busy, my); await demoWait(2200, my);
     await demoTap($('#skip'), my); await demoWait(2200, my);
     await demoTap($('[data-act=done]', notif), my); await demoWait(2600, my);
-    narrate('That\'s the loop: <b>ask → see next steps → opt in → one reminder → done → next step.</b> Now try it yourself, or open <b>Agency step lists</b> to change what residents see.');
+    narrate('That\'s the loop: <b>ask → see next steps → opt in → one reminder → done → next step.</b> Now try it yourself, or open <b>For agencies</b> to change what residents see.');
   } catch (e) { /* stopped or interrupted */ }
   if (demo.token === my) { demo.running = false; setPlay(); }
 }

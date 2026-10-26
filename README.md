@@ -8,4 +8,4 @@ steps of that service, each with a reason, and sends a reminder only if the resi
 Independent case study by Anvitha Abbagani, not an official Granicus product. Maple Town is a
 made-up town, and every service, step, date and contact in it is made up. Nothing is sent.
 
-One self-contained `index.html`: no build step, no server, no outside requests. Open it in any browser.
+One self-contained `index.html`: no build step, no server, no outside requests. Open it in any browser. `preview.png` is only the image that link previews show.
