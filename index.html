@@ -692,6 +692,24 @@ function matchStepQuestion(text) {
   return top;
 }
 
+// The way forward after any step action: the next step that isn't done, or the full list once there is none.
+function nextStepButton(svc, from) {
+  const steps = validSteps(svc);
+  const next = (from ? steps.slice(steps.indexOf(from) + 1) : steps).find((st) => stepStatus(svc, st).s !== 'done');
+  const go = document.createElement('button');
+  go.className = 'chip go'; go.type = 'button';
+  if (next) { go.textContent = 'Next step: ' + next.title; go.addEventListener('click', () => openStep(svc.id, next.id)); }
+  else { go.textContent = 'Show my steps'; go.addEventListener('click', () => renderTracker(svc)); }
+  return go;
+}
+function offerNextStep(svc, from) {
+  $$('.chips.sq').forEach((c) => c.remove());
+  const wrap = document.createElement('div');
+  wrap.className = 'chips sq';
+  wrap.append(nextStepButton(svc, from));
+  chat.append(wrap); scrollChat();
+}
+
 // Offers only the questions not yet asked about this step, then a way forward, so the chat never loops.
 function stepQuestionChips(svc, step) {
   $$('.chips.sq').forEach((c) => c.remove());
@@ -703,13 +721,7 @@ function stepQuestionChips(svc, step) {
     b.addEventListener('click', () => askStepQuestion(svc, step, f));
     wrap.append(b);
   });
-  const steps = validSteps(svc);
-  const next = steps.slice(steps.indexOf(step) + 1).find((st) => stepStatus(svc, st).s !== 'done');
-  const go = document.createElement('button');
-  go.className = 'chip go'; go.type = 'button';
-  if (next) { go.textContent = 'Next step: ' + next.title; go.addEventListener('click', () => openStep(svc.id, next.id)); }
-  else { go.textContent = 'Show my steps'; go.addEventListener('click', () => renderTracker(svc)); }
-  wrap.append(go);
+  wrap.append(nextStepButton(svc, step));
   chat.append(wrap); scrollChat();
 }
 
@@ -889,7 +901,7 @@ function openStep(svcId, stepId) {
     reminders.forEach((x) => { if (x.key === k && x.status === 'scheduled') x.status = 'done'; });
     completeStep(svc, step, 'resident'); updateSkip();
     await botSay('Marked as done: "' + step.title + '."');
-    await afterProgress(svc);
+    await afterProgress(svc, step);
   });
   on('stopone', async () => {
     closeSheet(); r.status = 'stopped'; updateSkip();
@@ -903,14 +915,14 @@ function openStep(svcId, stepId) {
     session.declined.add(k);
     logEvent('Step declined', { step: step.title, type: 'skip for now' });
     await botSay('No problem. I won\'t remind you about that one. It stays on your list if you change your mind.');
-    renderTracker(svc);
+    renderTracker(svc); offerNextStep(svc, step);
     narrate('Skipping is one tap, and the step is never pushed again. It still shows on the list, so the resident sees the whole path.');
   });
   on('notforme', async () => {
     closeSheet(); session.notForMe.add(k);
     logEvent('Step declined', { step: step.title, type: 'not for me' });
     await botSay('Thanks. I\'ve let the ' + svc.office + ' know this step didn\'t fit.');
-    renderTracker(svc);
+    renderTracker(svc); offerNextStep(svc, step);
     narrate('"Not for me" feeds a guardrail metric. If many residents say it, the agency\'s list needs fixing.');
   });
 }
@@ -974,7 +986,7 @@ function openConsent(svcId, stepId, channel) {
     closeSheet();
     $('#skip').disabled = false;
     await botSay('Done. You\'ll get 1 ' + ch.noun + ' on ' + fmt(on) + ' about "' + step.title + '." ' + ch.stop);
-    renderTracker(svc);
+    renderTracker(svc); offerNextStep(svc, step);
     narrate('The reminder is set, and it is the <b>only</b> thing being tracked. The list still shows every step. Press <b>Jump ahead to the reminder</b> to see it arrive.');
   });
 }
@@ -1042,7 +1054,7 @@ function completeStep(svc, step, source) {
   setTimeout(() => mood('cheer'), 900);
 }
 
-async function afterProgress(svc) {
+async function afterProgress(svc, step) {
   const steps = validSteps(svc);
   if (steps.length && steps.every((s) => session.done.has(key(svc, s)))) {
     logEvent('Chain completed', { service: svc.name, steps: steps.length });
@@ -1054,7 +1066,7 @@ async function afterProgress(svc) {
   }
   const next = steps.find((s) => stepStatus(svc, s).s === 'todo');
   if (next) await botSay('Next up: "' + next.title + '," due ' + fmt(dueDate(next)) + '.');
-  renderTracker(svc);
+  renderTracker(svc); offerNextStep(svc, step || null);
   narrate('The list updates in place. Every step stays visible with its status, so the resident always sees what\'s done, what has a reminder, and what\'s left.');
 }
 
